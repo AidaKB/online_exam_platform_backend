@@ -4,3 +4,8 @@ USER_TYPE_CHOICES = (
     ('student', 'دانشجو'),
     ('admin', 'مدیر سامانه'),
 )
+
+GENDER_CHOICES = (
+    ('male', 'مرد'),
+    ('female', 'زن')
+)

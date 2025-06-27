@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
 
     'core',
+    'exam',
 ]
 SITE_ID = 1
 
