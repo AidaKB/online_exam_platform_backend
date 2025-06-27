@@ -10,8 +10,8 @@ from django.utils.translation import gettext_lazy as _
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('id', 'user_type', 'username', 'email', 'first_name', 'last_name',
-                    'is_active', 'is_staff', 'is_superuser', 'is_team', 'date_joined')
-    list_filter = ('is_active', 'user_type', 'is_staff', 'is_superuser', 'is_team')
+                    'is_active', 'is_staff', 'is_superuser', 'date_joined')
+    list_filter = ('is_active', 'user_type', 'is_staff', 'is_superuser')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
 
@@ -23,7 +23,7 @@ class CustomUserAdmin(UserAdmin):
         (_('اطلاعات شخصی'), {
             'fields': ('first_name', 'last_name', 'email', 'user_type')}),
         (_('دسترسی‌ها'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'is_team', 'groups', 'user_permissions')}),
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('تاریخ‌ها'), {
             'fields': ('last_login', 'date_joined')}),
     )
@@ -32,7 +32,7 @@ class CustomUserAdmin(UserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'email', 'first_name', 'last_name',
-                       'password1', 'password2', 'is_active', 'is_staff', 'is_team', 'is_superuser', 'user_type')}
+                       'password1', 'password2', 'is_active', 'is_staff', 'is_superuser', 'user_type')}
          ),
     )
 
