@@ -12,9 +12,35 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email')
 
 
+class AdminSignUpSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, max_length=255)
+    password2 = serializers.CharField(write_only=True, max_length=255)
+
+    class Meta:
+        model = models.CustomUser
+        fields = ('id', 'username', 'password', 'password2', 'first_name', 'last_name', 'email')
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({
+                'password': 'رمز عبور و تکرار آن یکسان نیستند.'
+            })
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        admin = CustomUser.objects.create_superuser(
+            username=validated_data.pop('username', None),
+            password=validated_data.pop('password', None),
+            **validated_data
+        )
+        return admin
+
+
 class InstituteSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, max_length=255)
     password2 = serializers.CharField(write_only=True, max_length=255)
+
     institute_name = serializers.CharField(write_only=True, max_length=255)
     registration_code = serializers.CharField(write_only=True, max_length=50)
     address = serializers.CharField(write_only=True, style={'base_template': 'textarea.html'}, max_length=1000,
@@ -71,27 +97,104 @@ class InstituteSignUpSerializer(serializers.ModelSerializer):
         return institute_account
 
 
-class StaffSignUpSerializer(serializers.ModelSerializer):
+class TeacherSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, max_length=255)
     password2 = serializers.CharField(write_only=True, max_length=255)
 
+    institute_id = serializers.IntegerField(write_only=True, required=True)
+    national_code = serializers.CharField(write_only=True, max_length=10, required=True)
+    phone_number = serializers.CharField(write_only=True, max_length=20, required=True)
+    expertise = serializers.CharField(write_only=True, max_length=100, required=True)
+
     class Meta:
         model = models.CustomUser
-        fields = ('id', 'username', 'password', 'password2', 'first_name', 'last_name', 'email')
+        fields = (
+            'id', 'username', 'password', 'password2', 'institute_id', 'first_name', 'last_name', 'national_code',
+            'phone_number', 'expertise'
+        )
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise exceptions.PasswordISNotSameAsPassword2()
+            raise serializers.ValidationError({
+                'password': 'رمز عبور و تکرار آن یکسان نیستند.'
+            })
         return attrs
 
     def create(self, validated_data):
+        validated_data['user_type'] = 'teacher'
+
+        institute_id = validated_data.pop('institute_id')
+        national_code = validated_data.pop('national_code')
+        phone_number = validated_data.pop('phone_number')
+        expertise = validated_data.pop('expertise')
+
         validated_data.pop('password2')
-        team = CustomUser.objects.create_superuser(
+        teacher_account = CustomUser.objects.create_user(
             username=validated_data.pop('username', None),
             password=validated_data.pop('password', None),
             **validated_data
         )
-        return team
+        models.Teacher.objects.create(
+            account=teacher_account,
+            institute_id=institute_id,
+            national_code=national_code,
+            phone_number=phone_number,
+            expertise=expertise,
+        )
+        return teacher_account
+
+
+class StudentSignUpSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, max_length=255)
+    password2 = serializers.CharField(write_only=True, max_length=255)
+
+    institute_id = serializers.IntegerField(write_only=True, required=True)
+    national_code = serializers.CharField(write_only=True, max_length=10, required=True)
+    phone_number = serializers.CharField(write_only=True, max_length=20, required=True)
+    major_id = serializers.IntegerField(write_only=True, required=True)
+    date_of_birth = serializers.DateField(write_only=True, allow_null=True)
+    gender = serializers.CharField(write_only=True, max_length=10, required=True, allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = models.CustomUser
+        fields = (
+            'id', 'username', 'password', 'password2', 'institute_id', 'first_name', 'last_name', 'national_code',
+            'phone_number', 'major_id', 'date_of_birth', 'gender'
+        )
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({
+                'password': 'رمز عبور و تکرار آن یکسان نیستند.'
+            })
+        return attrs
+
+    def create(self, validated_data):
+        validated_data['user_type'] = 'student'
+
+        institute_id = validated_data.pop('institute_id')
+        national_code = validated_data.pop('national_code')
+        phone_number = validated_data.pop('phone_number')
+        major_id = validated_data.pop('major_id')
+        date_of_birth = validated_data.pop('date_of_birth')
+        gender = validated_data.pop('gender')
+
+        validated_data.pop('password2')
+        student_account = CustomUser.objects.create_user(
+            username=validated_data.pop('username', None),
+            password=validated_data.pop('password', None),
+            **validated_data
+        )
+        models.Student.objects.create(
+            account=student_account,
+            institute_id=institute_id,
+            national_code=national_code,
+            phone_number=phone_number,
+            major_id=major_id,
+            date_of_birth=date_of_birth,
+            gender=gender,
+        )
+        return student_account
 
 
 class CustomLoginSerializer(LoginSerializer):

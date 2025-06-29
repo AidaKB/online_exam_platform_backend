@@ -8,12 +8,20 @@ from core import serializers
 from .serializers import CustomLoginSerializer
 
 
+class AdminSignUpAPIView(generics.CreateAPIView):
+    serializer_class = serializers.AdminSignUpSerializer
+
+
 class InstituteSignUpAPIView(generics.CreateAPIView):
     serializer_class = serializers.InstituteSignUpSerializer
 
 
-# class StaffSignUpAPIView(generics.CreateAPIView):
-#     serializer_class = serializers.StaffSignUpSerializer
+class TeacherSignUpAPIView(generics.CreateAPIView):
+    serializer_class = serializers.TeacherSignUpSerializer
+
+
+class StudentSignUpAPIView(generics.CreateAPIView):
+    serializer_class = serializers.StudentSignUpSerializer
 
 
 class CustomLoginView(LoginView):
@@ -25,7 +33,6 @@ class CustomLoginView(LoginView):
         data = original_response.data
         data['user_id'] = user.id
         return Response(data)
-
 
 # class CustomUserDetailView(generics.RetrieveAPIView):
 #     queryset = get_user_model().objects.all()

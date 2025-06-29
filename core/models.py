@@ -73,36 +73,12 @@ class Student(models.Model):
         related_name="students",
         verbose_name="آموزشگاه"
     )
-    national_code = models.CharField(
-        max_length=10,
-        unique=True,
-        verbose_name="کد ملی"
-    )
-    phone_number = models.CharField(
-        max_length=20,
-        verbose_name="شماره تماس"
-    )
-    major = models.ForeignKey(
-        'exam.Major',
-        on_delete=models.PROTECT,
-        verbose_name="رشته تحصیلی"
-    )
-    date_of_birth = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name="تاریخ تولد"
-    )
-    gender = models.CharField(
-        max_length=10,
-        choices=consts.GENDER_CHOICES,
-        null=True,
-        blank=True,
-        verbose_name="جنسیت"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="تاریخ عضویت"
-    )
+    national_code = models.CharField(max_length=10, unique=True, verbose_name="کد ملی")
+    phone_number = models.CharField(max_length=20, verbose_name="شماره تماس")
+    major = models.ForeignKey('exam.Major', on_delete=models.PROTECT, verbose_name="رشته تحصیلی")
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name="تاریخ تولد")
+    gender = models.CharField(max_length=10, choices=consts.GENDER_CHOICES, null=True, blank=True, verbose_name="جنسیت")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ عضویت")
 
     class Meta:
         verbose_name = "دانش‌آموز"
