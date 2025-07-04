@@ -18,3 +18,9 @@ GRADE_CHOICES = [
     ('master', 'کارشناسی ارشد'),
     ('phd', 'دکترا'),
 ]
+
+QUESTION_TYPES = (
+    ('MultipleChoice', 'چندگزینه‌ای'),
+    ('Descriptive', 'تشریحی'),
+    ('TrueFalse', 'درست/نادرست')
+)

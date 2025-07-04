@@ -1,7 +1,5 @@
 from dj_rest_auth.views import LoginView
-from django.contrib.auth import get_user_model
 from rest_framework import generics
-from rest_framework import permissions
 from rest_framework.response import Response
 
 from core import serializers
