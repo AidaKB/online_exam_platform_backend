@@ -97,6 +97,23 @@ class InstituteSignUpSerializer(serializers.ModelSerializer):
         return institute_account
 
 
+class InstituteSerializer(serializers.ModelSerializer):
+    account = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = models.Institute
+        fields = (
+            'id',
+            'account',
+            'name',
+            'registration_code',
+            'address',
+            'phone',
+            'website',
+            'created_at',
+        )
+
+
 class TeacherSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, max_length=255)
     password2 = serializers.CharField(write_only=True, max_length=255)
@@ -142,6 +159,23 @@ class TeacherSignUpSerializer(serializers.ModelSerializer):
             expertise=expertise,
         )
         return teacher_account
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    account = CustomUserSerializer(read_only=True)
+    institute = InstituteSerializer(read_only=True)
+
+    class Meta:
+        model = models.Teacher
+        fields = (
+            'id',
+            'account',
+            'institute',
+            'national_code',
+            'phone_number',
+            'expertise',
+            'created_at',
+        )
 
 
 class StudentSignUpSerializer(serializers.ModelSerializer):
