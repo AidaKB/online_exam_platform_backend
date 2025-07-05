@@ -1,4 +1,6 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from .models import Classroom
 from .serializers import ClassroomSerializer
@@ -25,3 +27,23 @@ class ClassroomListCreateAPIView(generics.ListCreateAPIView):
             return [IsAuthenticated(), IsTeacherOrInstituteOrAdmin()]
         return [IsAuthenticated()]
 
+
+class ClassroomRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ClassroomSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        classroom_id = self.kwargs.get('pk')
+        classroom = get_object_or_404(Classroom, pk=classroom_id)
+
+        if getattr(user, "user_type", None) == "admin":
+            return classroom
+
+        elif hasattr(user, "teacher") and classroom.teacher == user.teacher:
+            return classroom
+
+        elif hasattr(user, "institute") and classroom.institute == user.institute:
+            return classroom
+
+        raise PermissionDenied("شما اجازه دسترسی به این کلاس را ندارید.")
