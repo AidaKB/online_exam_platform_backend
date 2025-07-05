@@ -10,4 +10,8 @@ urlpatterns = [
 
     path('auth/login/', views.CustomLoginView.as_view(), name='custom_login'),
     path('auth/logout/', LogoutView.as_view(), name='custom_logout'),
+
+    path('institutes/', views.InstituteListAPIView.as_view(), name='institute'),
+    path('institutes/<int:pk>', views.InstituteRetrieveUpdateDeleteAPIView.as_view(), name='institute-detail'),
+
 ]

@@ -1,0 +1,16 @@
+# permissions.py
+from rest_framework import permissions
+
+
+class IsAdminOrInstituteSelf(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if getattr(user, 'user_type', None) == 'admin':
+            return True
+
+        if hasattr(user, 'institute'):
+            return obj.id == user.institute.id
+
+        return False
