@@ -12,6 +12,9 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='custom_logout'),
 
     path('institutes/', views.InstituteListAPIView.as_view(), name='institute'),
-    path('institutes/<int:pk>', views.InstituteRetrieveUpdateDeleteAPIView.as_view(), name='institute-detail'),
+    path('institutes/<int:pk>/', views.InstituteRetrieveUpdateDeleteAPIView.as_view(), name='institute-detail'),
+
+    path('teachers/', views.TeacherListAPIView.as_view(), name='teacher'),
+    path('teachers/<int:pk>/', views.TeacherRetrieveUpdateDeleteAPIView.as_view(), name='teacher-detail'),
 
 ]

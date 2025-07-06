@@ -14,3 +14,17 @@ class IsAdminOrInstituteSelf(permissions.BasePermission):
             return obj.id == user.institute.id
 
         return False
+
+
+class IsAdminOrTeacherSelf(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if getattr(user, 'user_type', None) == 'admin':
+            return True
+
+        if hasattr(user, 'teacher'):
+            return obj.id == user.teacher.id
+
+        return False
