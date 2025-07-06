@@ -9,4 +9,7 @@ urlpatterns = [
     path('students-classrooms/<int:pk>/', views.StudentClassroomRetrieveUpdateDeleteAPIView.as_view()
          , name='students-classroom-detail'),
 
+    path('majors/', views.MajorListCreateAPIView.as_view(), name='major'),
+    path('majors/<int:pk>/', views.MajorRetrieveUpdateDeleteAPIView.as_view(), name='major-detail'),
+
 ]

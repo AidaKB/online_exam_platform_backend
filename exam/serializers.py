@@ -106,3 +106,17 @@ class StudentClassroomSerializer(serializers.ModelSerializer):
         attrs.pop('student_id', None)
 
         return attrs
+
+
+class MajorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Major
+        fields = "__all__"
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+
+        if not (hasattr(user, 'institute')) and not(getattr(user, 'user_type', None) == 'admin'):
+            raise serializers.ValidationError("شما اجازه افزودن رشته را ندارید.")
+
+        return super().create(validated_data)

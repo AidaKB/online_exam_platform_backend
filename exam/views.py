@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated , IsAdminUser
 from . import models
 from . import serializers
 from . import permissions
+from .models import Major
 
 
 class ClassroomListCreateAPIView(generics.ListCreateAPIView):
@@ -114,3 +115,17 @@ class StudentClassroomRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroy
             raise PermissionDenied("شما استاد این کلاس نیستید.")
 
         raise PermissionDenied("شما مجاز به انجام این عملیات نیستید.")
+
+
+class MajorListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.MajorSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Major.objects.all()
+
+
+class MajorRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Major.objects.all()
+    serializer_class = serializers.MajorSerializer
+    permission_classes = [IsAdminUser]
+
+
