@@ -61,3 +61,48 @@ class ClassroomSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("فقط استاد، موسسه یا مدیر سامانه مجاز به ساخت کلاس هستند.")
 
         return attrs
+
+
+class StudentClassroomSerializer(serializers.ModelSerializer):
+    classroom_id = serializers.IntegerField(write_only=True)
+    classroom = serializers.StringRelatedField(read_only=True)
+
+    student_id = serializers.IntegerField(write_only=True)
+    student = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = models.StudentClassroom
+        fields = [
+            'id',
+            'classroom_id',
+            'classroom',
+            'student_id',
+            'student',
+        ]
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+
+        if hasattr(user, 'student'):
+            raise serializers.ValidationError("دانش‌آموزان اجازه افزودن به کلاس را ندارند.")
+
+        try:
+            classroom = models.Classroom.objects.get(id=attrs['classroom_id'])
+        except models.Classroom.DoesNotExist:
+            raise serializers.ValidationError({'classroom_id': 'کلاس موردنظر یافت نشد.'})
+
+        try:
+            student = models.Student.objects.get(id=attrs['student_id'])
+        except models.Student.DoesNotExist:
+            raise serializers.ValidationError({'student_id': 'دانش‌آموز یافت نشد.'})
+
+        if classroom.institute != student.institute:
+            raise serializers.ValidationError("کلاس و دانش‌آموز باید متعلق به یک موسسه باشند.")
+
+        attrs['classroom'] = classroom
+        attrs['student'] = student
+
+        attrs.pop('classroom_id', None)
+        attrs.pop('student_id', None)
+
+        return attrs
