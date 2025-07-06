@@ -17,4 +17,7 @@ urlpatterns = [
     path('teachers/', views.TeacherListAPIView.as_view(), name='teacher'),
     path('teachers/<int:pk>/', views.TeacherRetrieveUpdateDeleteAPIView.as_view(), name='teacher-detail'),
 
+    path('students/', views.StudentListAPIView.as_view(), name='student'),
+    path('students/<int:pk>/', views.StudentRetrieveUpdateDeleteAPIView.as_view(), name='student-detail'),
+
 ]

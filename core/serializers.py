@@ -178,6 +178,25 @@ class TeacherSerializer(serializers.ModelSerializer):
         )
 
 
+class StudentSerializer(serializers.ModelSerializer):
+    account = CustomUserSerializer(read_only=True)
+    institute = InstituteSerializer(read_only=True)
+
+    class Meta:
+        model = models.Student
+        fields = (
+            'id',
+            'account',
+            'institute',
+            'national_code',
+            'phone_number',
+            'major',
+            'date_of_birth',
+            'gender',
+            'created_at',
+        )
+
+
 class StudentSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, max_length=255)
     password2 = serializers.CharField(write_only=True, max_length=255)

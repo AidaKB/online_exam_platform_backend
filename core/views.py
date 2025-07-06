@@ -5,7 +5,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsAdminOrInstituteSelf, IsAdminOrTeacherSelf
+from .permissions import IsAdminOrInstituteSelf, IsAdminOrTeacherSelf, IsAdminOrStudentOrInstituteSelf
 from core import serializers
 from . import models
 from .serializers import CustomLoginSerializer
@@ -117,6 +117,59 @@ class TeacherRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class StudentSignUpAPIView(generics.CreateAPIView):
     serializer_class = serializers.StudentSignUpSerializer
+
+
+class StudentListAPIView(generics.ListAPIView):
+    serializer_class = serializers.StudentSerializer
+    queryset = models.Student.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if getattr(user, 'user_type', None) == 'admin':
+            return models.Student.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.Student.objects.filter(institute=user.institute)
+
+        raise PermissionDenied("شما مجاز به مشاهده لیست دانشجویان نیستید.")
+
+
+class StudentRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Student.objects.all()
+    serializer_class = serializers.StudentSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsAdminOrStudentOrInstituteSelf()]
+
+    def get_object(self):
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+        user = self.request.user
+
+        if getattr(user, "user_type", None) == "admin":
+            return obj
+
+        if hasattr(user, "student") and user.student.id == obj.id:
+            return obj
+
+        if hasattr(user, "institute") and obj.institute.id == user.institute.id:
+            return obj
+
+        raise PermissionDenied("شما مجاز به مشاهده یا ویرایش این اطلاعات نیستید.")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError:
+            return Response(
+                {"detail": "این دانش قابل حذف نیست چون اطلاعاتی وابسته به آن وجود دارند."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CustomLoginView(LoginView):
