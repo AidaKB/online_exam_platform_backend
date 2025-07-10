@@ -53,7 +53,7 @@ class Exam(models.Model):
     duration_minutes = models.PositiveIntegerField(verbose_name="مدت زمان (دقیقه)")
     status = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
     category = models.ForeignKey(ExamCategory, on_delete=models.SET_NULL, null=True, verbose_name="دسته‌بندی")
-    creator = models.ForeignKey(Teacher, on_delete=models.CASCADE, verbose_name="سازنده آزمون")
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="سازنده آزمون")
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name="exams",
                                   verbose_name="کلاس مرتبط")
 

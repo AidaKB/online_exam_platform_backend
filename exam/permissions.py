@@ -29,6 +29,7 @@ class IsAdminOrTeacher(permissions.BasePermission):
         user = request.user
         return getattr(user, 'user_type', None) in ['admin', 'teacher']
 
+
 class IsAdminOrTeacherOrInstituteOwner(permissions.BasePermission):
     """
     فقط ادمین، استاد مربوط به کلاس یا موسسه‌ای که آن استاد متعلق به آن است می‌توانند آپدیت و دیلیت کنند.
@@ -53,5 +54,24 @@ class IsAdminOrTeacherOrInstituteOwner(permissions.BasePermission):
         # اگر موسسه استاد باشد
         if hasattr(user, 'institute') and obj.teacher and obj.teacher.institute == user.institute:
             return True
+
+        return False
+
+
+class IsAdminOrInstituteOrCreatorTeacher(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if user.user_type == 'admin':
+            return True
+
+        if hasattr(user, 'institute'):
+            return obj.classroom.teacher.institute_id == user.institute.id
+
+        if hasattr(user, 'teacher'):
+            return obj.classroom.teacher.institute_id == user.teacher.institute_id
 
         return False

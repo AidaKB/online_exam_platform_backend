@@ -12,7 +12,10 @@ urlpatterns = [
     path('majors/', views.MajorListCreateAPIView.as_view(), name='major'),
     path('majors/<int:pk>/', views.MajorDetailAPIView.as_view(), name='major-detail'),
 
-    path('exam-categories/', views.ExamCategoryListCreateAPIView.as_view(), name='major'),
-    path('exam-categories/<int:pk>/', views.ExamCategoryDetailAPIView.as_view(), name='major-detail'),
+    path('exam-categories/', views.ExamCategoryListCreateAPIView.as_view(), name='exam-category'),
+    path('exam-categories/<int:pk>/', views.ExamCategoryDetailAPIView.as_view(), name='exam-category-detail'),
+
+    path('exams/', views.ExamListCreateAPIView.as_view(), name='exam'),
+    path('exams/<int:pk>/', views.ExamDetailAPIView.as_view(), name='exam-detail'),
 
 ]

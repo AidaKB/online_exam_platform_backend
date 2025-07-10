@@ -167,3 +167,49 @@ class ExamCategoryDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             instance.delete()
         else:
             raise PermissionDenied("شما مجاز به حذف این دسته‌بندی نیستید.")
+
+
+class ExamListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.ExamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.user_type == 'admin':
+            return models.Exam.objects.all()
+
+        elif hasattr(user, 'institute'):
+            return models.Exam.objects.filter(
+                classroom__teacher__institute=user.institute
+            )
+
+        elif hasattr(user, 'teacher'):
+            return models.Exam.objects.filter(
+                classroom__teacher=user.teacher
+            )
+
+        elif hasattr(user, 'student'):
+            return models.Exam.objects.filter(
+                classroom__teacher__institute=user.student.institute
+            ).distinct()
+
+        return models.Exam.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+
+        if hasattr(user, 'teacher'):
+            serializer.save(creator=user)
+        elif hasattr(user, 'institute'):
+            serializer.save(creator=user)
+        elif user.user_type == 'admin':
+            serializer.save(creator=user)
+        else:
+            raise PermissionDenied("شما اجازه ساخت آزمون را ندارید.")
+
+
+class ExamDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Exam.objects.all()
+    serializer_class = serializers.ExamSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminOrInstituteOrCreatorTeacher]

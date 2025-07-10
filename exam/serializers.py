@@ -115,3 +115,38 @@ class ExamCategorySerializer(serializers.ModelSerializer):
 
         validated_data['creator'] = user
         return super().create(validated_data)
+
+
+class ExamSerializer(serializers.ModelSerializer):
+    creator = core_serializers.CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = models.Exam
+        fields = '__all__'
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+
+        if not (hasattr(user, 'teacher') or hasattr(user, 'institute') or user.user_type == 'admin'):
+            raise serializers.ValidationError("فقط استاد، موسسه یا ادمین می‌توانند آزمون بسازند.")
+
+        classroom = attrs.get('classroom')
+        if hasattr(user, 'institute'):
+            if classroom.teacher.institute_id != user.institute.id:
+                raise serializers.ValidationError("این کلاس متعلق به موسسه شما نیست.")
+        elif hasattr(user, 'teacher'):
+            if classroom.teacher_id != user.teacher.id:
+                raise serializers.ValidationError("شما فقط می‌توانید برای کلاس خودتان آزمون بسازید.")
+
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
+        duration_minutes = attrs.get('duration_minutes')
+
+        if start_time >= end_time:
+            raise serializers.ValidationError("زمان شروع باید قبل از زمان پایان باشد.")
+
+        total_duration = (end_time - start_time).total_seconds() / 60
+        if duration_minutes > total_duration:
+            raise serializers.ValidationError("مدت زمان آزمون نمی‌تواند بیشتر از فاصله بین زمان شروع و پایان باشد.")
+
+        return attrs

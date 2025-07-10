@@ -45,12 +45,7 @@ class Institute(models.Model):
 class Teacher(models.Model):
     account = models.OneToOneField(
         CustomUser, on_delete=models.PROTECT, related_name="teacher", verbose_name="حساب کاربری")
-    institute = models.ForeignKey(
-        Institute,
-        on_delete=models.CASCADE,
-        related_name="teachers",
-        verbose_name="آموزشگاه"
-    )
+    institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="teachers", verbose_name="آموزشگاه")
     national_code = models.CharField(max_length=10, unique=True, verbose_name="کد ملی")
     phone_number = models.CharField(max_length=20, verbose_name="شماره تماس")
     expertise = models.CharField(max_length=100, verbose_name="تخصص")
@@ -67,12 +62,7 @@ class Teacher(models.Model):
 class Student(models.Model):
     account = models.OneToOneField(
         CustomUser, on_delete=models.PROTECT, related_name="student", verbose_name="حساب کاربری")
-    institute = models.ForeignKey(
-        Institute,
-        on_delete=models.CASCADE,
-        related_name="students",
-        verbose_name="آموزشگاه"
-    )
+    institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="students", verbose_name="آموزشگاه")
     national_code = models.CharField(max_length=10, unique=True, verbose_name="کد ملی")
     phone_number = models.CharField(max_length=20, verbose_name="شماره تماس")
     major = models.ForeignKey('exam.Major', on_delete=models.PROTECT, verbose_name="رشته تحصیلی")
