@@ -22,3 +22,9 @@ class IsStudentOfClassOrTeacherOrInstitute(permissions.BasePermission):
         elif hasattr(request.user, "student"):
             return obj.student_classroom.filter(student=request.user.student).exists()
         return False
+
+
+class IsAdminOrTeacher(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return getattr(user, 'user_type', None) in ['admin', 'teacher']

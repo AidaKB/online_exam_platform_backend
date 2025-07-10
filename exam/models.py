@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import Student, Teacher, Institute
+from core.models import Student, Teacher, Institute, CustomUser
 from . import consts
 
 
@@ -37,6 +37,7 @@ class Major(models.Model):
 
 class ExamCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام دسته‌بندی")
+    creator = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="exam_categories")
 
     class Meta:
         verbose_name = "دسته‌بندی آزمون"

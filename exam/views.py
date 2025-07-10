@@ -1,7 +1,8 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated , IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from . import models
 from . import serializers
 from . import permissions
@@ -29,7 +30,7 @@ class ClassroomListCreateAPIView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
 
-class ClassroomRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+class ClassroomDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.ClassroomSerializer
     permission_classes = [IsAuthenticated]
 
@@ -88,7 +89,7 @@ class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
             raise PermissionDenied("شما اجازه افزودن دانش‌آموز به این کلاس را ندارید.")
 
 
-class StudentClassroomRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+class StudentClassroomDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StudentClassroomSerializer
     permission_classes = [IsAuthenticated]
 
@@ -123,9 +124,61 @@ class MajorListCreateAPIView(generics.ListCreateAPIView):
     queryset = Major.objects.all()
 
 
-class MajorRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+class MajorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Major.objects.all()
     serializer_class = serializers.MajorSerializer
     permission_classes = [IsAdminUser]
 
 
+class ExamCategoryListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.ExamCategorySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.user_type == 'admin':
+            return models.ExamCategory.objects.all()
+
+        elif hasattr(user, 'teacher'):
+            return models.ExamCategory.objects.filter(
+                Q(creator=user) | Q(creator__user_type='admin')
+            )
+
+        return models.ExamCategory.objects.none()
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), permissions.IsAdminOrTeacher()]
+        return [IsAuthenticated()]
+
+
+class ExamCategoryDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.ExamCategorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == 'admin':
+            return models.ExamCategory.objects.all()
+        elif hasattr(user, 'teacher'):
+            return models.ExamCategory.objects.filter(
+                Q(creator=user) | Q(creator__user_type='admin')
+            )
+        return models.ExamCategory.objects.none()
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        instance = self.get_object()
+
+        if user.user_type == 'admin' or instance.creator == user:
+            serializer.save()
+        else:
+            raise PermissionDenied("شما مجاز به ویرایش این دسته‌بندی نیستید.")
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+
+        if user.user_type == 'admin' or instance.creator == user:
+            instance.delete()
+        else:
+            raise PermissionDenied("شما مجاز به حذف این دسته‌بندی نیستید.")

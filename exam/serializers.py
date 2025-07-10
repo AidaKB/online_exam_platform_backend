@@ -116,7 +116,24 @@ class MajorSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
 
-        if not (hasattr(user, 'institute')) and not(getattr(user, 'user_type', None) == 'admin'):
+        if not (hasattr(user, 'institute')) and not (getattr(user, 'user_type', None) == 'admin'):
             raise serializers.ValidationError("شما اجازه افزودن رشته را ندارید.")
 
+        return super().create(validated_data)
+
+
+class ExamCategorySerializer(serializers.ModelSerializer):
+    creator = core_serializers.CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = models.ExamCategory
+        fields = "__all__"
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+
+        if user.user_type not in ['admin', 'teacher']:
+            raise serializers.ValidationError("فقط مدیر یا استاد مجاز به ساخت دسته‌بندی هستند.")
+
+        validated_data['creator'] = user
         return super().create(validated_data)
