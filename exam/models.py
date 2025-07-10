@@ -5,8 +5,6 @@ from . import consts
 
 class Classroom(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام کلاس")
-    institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name="classrooms",
-                                  verbose_name="آموزشگاه")
     teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, null=True, blank=True, related_name="classrooms",
                                 verbose_name="استاد")
     grade = models.CharField(max_length=30, choices=consts.GRADE_CHOICES, verbose_name="پایه تحصیلی")
@@ -18,7 +16,7 @@ class Classroom(models.Model):
         verbose_name_plural = "کلاس‌ها"
 
     def __str__(self):
-        return f"{self.name} - {self.grade} ({self.institute.name})"
+        return f"{self.name} - {self.grade}"
 
 
 class StudentClassroom(models.Model):
@@ -96,7 +94,6 @@ class Option(models.Model):
 
 class UserAnswer(models.Model):
     user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش‌آموز")
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="آزمون")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name="سوال")
     answer_text = models.TextField(verbose_name="پاسخ داده‌شده")
     score = models.FloatField(null=True, blank=True, verbose_name="نمره اختصاص داده‌شده")

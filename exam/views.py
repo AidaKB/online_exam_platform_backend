@@ -20,7 +20,7 @@ class ClassroomListCreateAPIView(generics.ListCreateAPIView):
         elif hasattr(user, "teacher"):
             return models.Classroom.objects.filter(teacher=user.teacher)
         elif hasattr(user, "institute"):
-            return models.Classroom.objects.filter(institute=user.institute)
+            return models.Classroom.objects.filter(teacher__institute=user.institute)
         else:
             return models.Classroom.objects.all()
 
@@ -31,24 +31,9 @@ class ClassroomListCreateAPIView(generics.ListCreateAPIView):
 
 
 class ClassroomDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Classroom.objects.all()
     serializer_class = serializers.ClassroomSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        user = self.request.user
-        classroom_id = self.kwargs.get('pk')
-        classroom = get_object_or_404(models.Classroom, pk=classroom_id)
-
-        if getattr(user, "user_type", None) == "admin":
-            return classroom
-
-        elif hasattr(user, "teacher") and classroom.teacher == user.teacher:
-            return classroom
-
-        elif hasattr(user, "institute") and classroom.institute == user.institute:
-            return classroom
-
-        raise PermissionDenied("شما اجازه دسترسی به این کلاس را ندارید.")
+    permission_classes = [IsAuthenticated, permissions.IsAdminOrTeacherOrInstituteOwner]
 
 
 class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
@@ -106,7 +91,7 @@ class StudentClassroomDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("دانش‌آموز فقط می‌تواند پاسخ‌های خودش را مشاهده کند.")
 
         if hasattr(user, 'institute'):
-            if obj.classroom.institute_id == user.institute.id:
+            if obj.classroom.teacher.institute_id == user.institute.id:
                 return obj
             raise PermissionDenied("این کلاس متعلق به موسسه شما نیست.")
 
