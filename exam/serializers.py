@@ -150,3 +150,32 @@ class ExamSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("مدت زمان آزمون نمی‌تواند بیشتر از فاصله بین زمان شروع و پایان باشد.")
 
         return attrs
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Question
+        fields = "__all__"
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        exam = attrs.get('exam')
+
+        if exam is None:
+            raise serializers.ValidationError("آزمون مشخص نشده است.")
+
+        if not (
+                user.user_type == 'admin' or
+                hasattr(user, 'teacher') or
+                hasattr(user, 'institute')
+        ):
+            raise serializers.ValidationError("شما اجازه ایجاد سوال را ندارید.")
+
+        if hasattr(user, 'institute') and exam.classroom.teacher.institute != user.institute:
+            raise serializers.ValidationError(
+                "شما نمی‌توانید برای این آزمون سوال بسازید، این آزمون متعلق به موسسه شما نیست.")
+
+        if hasattr(user, 'teacher') and exam.classroom.teacher != user.teacher:
+            raise serializers.ValidationError("شما فقط می‌توانید برای کلاس خودتان سوال بسازید.")
+
+        return attrs

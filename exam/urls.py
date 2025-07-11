@@ -18,4 +18,7 @@ urlpatterns = [
     path('exams/', views.ExamListCreateAPIView.as_view(), name='exam'),
     path('exams/<int:pk>/', views.ExamDetailAPIView.as_view(), name='exam-detail'),
 
+    path('questions/', views.QuestionListCreateAPIView.as_view(), name='question'),
+    path('questions/<int:pk>/', views.QuestionDetailAPIView.as_view(), name='question-detail'),
+
 ]

@@ -75,3 +75,38 @@ class IsAdminOrInstituteOrCreatorTeacher(permissions.BasePermission):
             return obj.classroom.teacher.institute_id == user.teacher.institute_id
 
         return False
+
+
+class IsAdminOrInstituteOrTeacherForQuestion(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if request.method in permissions.SAFE_METHODS:
+            return user.is_authenticated
+        if request.method == 'POST':
+            return (
+                    user.user_type == 'admin' or
+                    hasattr(user, 'teacher') or
+                    hasattr(user, 'institute')
+            )
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        # ادمین همه دسترسی‌ها را دارد
+        if user.user_type == 'admin':
+            return True
+
+        # موسسه فقط به سوالاتی که موسسه‌اش است دسترسی دارد
+        if hasattr(user, 'institute'):
+            return obj.exam.classroom.teacher.institute == user.institute
+
+        # استاد فقط سوالاتی که مربوط به کلاس خودش است را می‌تواند ببینید یا ویرایش کند
+        if hasattr(user, 'teacher'):
+            return obj.exam.classroom.teacher == user.teacher
+
+        # دانشجو فقط سوالات مربوط به موسسه خودش را می‌تواند مشاهده کند (Retrieve, List)
+        if hasattr(user, 'student') and request.method in permissions.SAFE_METHODS:
+            return obj.exam.classroom.teacher.institute == user.student.institute
+
+        return False

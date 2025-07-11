@@ -213,3 +213,68 @@ class ExamDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Exam.objects.all()
     serializer_class = serializers.ExamSerializer
     permission_classes = [IsAuthenticated, permissions.IsAdminOrInstituteOrCreatorTeacher]
+
+
+class QuestionListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.QuestionSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminOrInstituteOrTeacherForQuestion]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.user_type == 'admin':
+            return models.Question.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.Question.objects.filter(
+                exam__classroom__teacher__institute=user.institute
+            )
+
+        if hasattr(user, 'teacher'):
+            return models.Question.objects.filter(
+                exam__classroom__teacher=user.teacher
+            )
+
+        if hasattr(user, 'student'):
+            return models.Question.objects.filter(
+                exam__classroom__teacher__institute=user.student.institute
+            ).distinct()
+
+        return models.Question.objects.none()
+
+
+class QuestionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.QuestionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return models.Question.objects.select_related('exam__classroom__teacher__institute')
+
+    def get_object(self):
+        user = self.request.user
+        question = super().get_object()
+        exam = question.exam
+        classroom = exam.classroom
+        teacher = classroom.teacher
+        institute = teacher.institute
+
+        if hasattr(user, 'student'):
+            if institute == user.student.institute:
+                if self.request.method in ('GET',):
+                    return question
+                raise PermissionDenied("دانش‌آموز فقط می‌تواند سوالات آزمون خود را مشاهده کند.")
+
+        elif hasattr(user, 'teacher'):
+            if teacher == user.teacher:
+                return question
+            raise PermissionDenied("شما فقط به سوالات آزمون‌های خودتان دسترسی دارید.")
+
+        elif hasattr(user, 'institute'):
+            if institute == user.institute:
+                return question
+            raise PermissionDenied("این سوال متعلق به موسسه شما نیست.")
+
+        elif getattr(user, 'user_type', None) == 'admin':
+            return question
+
+        raise PermissionDenied("شما اجازه مشاهده یا ویرایش این سوال را ندارید.")
