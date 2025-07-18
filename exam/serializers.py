@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from . import models
 from core import serializers as core_serializers
+from django.utils import timezone as dj_timezone
 
 
 class ClassroomSerializer(serializers.ModelSerializer):
@@ -35,6 +36,8 @@ class ClassroomSerializer(serializers.ModelSerializer):
             teacher = attrs.get('teacher')
             if teacher.institute_id != user.institute.id:
                 raise serializers.ValidationError({'teacher_id': 'استاد انتخاب‌شده متعلق به موسسه شما نیست.'})
+        elif getattr(user, "user_type", None) == "admin":
+            return attrs
         else:
             raise serializers.ValidationError("فقط استاد، موسسه یا مدیر سامانه مجاز به ساخت کلاس هستند.")
 
@@ -74,7 +77,7 @@ class StudentClassroomSerializer(serializers.ModelSerializer):
         except models.Student.DoesNotExist:
             raise serializers.ValidationError({'student_id': 'دانش‌آموز یافت نشد.'})
 
-        if classroom.institute != student.institute:
+        if classroom.teacher.institute != student.institute:
             raise serializers.ValidationError("کلاس و دانش‌آموز باید متعلق به یک موسسه باشند.")
 
         attrs['classroom'] = classroom
@@ -118,6 +121,7 @@ class ExamCategorySerializer(serializers.ModelSerializer):
 
 
 class ExamSerializer(serializers.ModelSerializer):
+    classroom = serializers.PrimaryKeyRelatedField(read_only=True)
     creator = core_serializers.CustomUserSerializer(read_only=True)
 
     class Meta:
@@ -129,14 +133,6 @@ class ExamSerializer(serializers.ModelSerializer):
 
         if not (hasattr(user, 'teacher') or hasattr(user, 'institute') or user.user_type == 'admin'):
             raise serializers.ValidationError("فقط استاد، موسسه یا ادمین می‌توانند آزمون بسازند.")
-
-        classroom = attrs.get('classroom')
-        if hasattr(user, 'institute'):
-            if classroom.teacher.institute_id != user.institute.id:
-                raise serializers.ValidationError("این کلاس متعلق به موسسه شما نیست.")
-        elif hasattr(user, 'teacher'):
-            if classroom.teacher_id != user.teacher.id:
-                raise serializers.ValidationError("شما فقط می‌توانید برای کلاس خودتان آزمون بسازید.")
 
         start_time = attrs.get('start_time')
         end_time = attrs.get('end_time')
@@ -151,24 +147,48 @@ class ExamSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+        classroom_id = self.context['view'].kwargs.get('classroom_id')
+
+        try:
+            classroom = models.Classroom.objects.get(pk=classroom_id)
+        except models.Classroom.DoesNotExist:
+            raise serializers.ValidationError({"classroom": "کلاس مورد نظر وجود ندارد."})
+
+        if hasattr(user, 'institute'):
+            if classroom.teacher.institute_id != user.institute.id:
+                raise serializers.ValidationError({"classroom": "این کلاس متعلق به موسسه شما نیست."})
+
+        elif hasattr(user, 'teacher'):
+            if classroom.teacher_id != user.teacher.id:
+                raise serializers.ValidationError({"classroom": "شما فقط می‌توانید برای کلاس خودتان آزمون بسازید."})
+
+        elif hasattr(user, 'student'):
+            raise serializers.ValidationError("شما اجازه ساخت آزمون را ندارید.")
+
+        validated_data['creator'] = user
+        validated_data['classroom'] = classroom
+        return super().create(validated_data)
+
 
 class QuestionSerializer(serializers.ModelSerializer):
+    exam = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = models.Question
         fields = "__all__"
 
     def validate(self, attrs):
         user = self.context['request'].user
-        exam = attrs.get('exam')
+        exam_id = self.context['view'].kwargs.get('exam_id')
+        try:
+            exam = models.Exam.objects.get(pk=exam_id)
+        except models.Exam.DoesNotExist:
+            raise serializers.ValidationError({"exam": "آزمون مشخص‌شده وجود ندارد."})
 
-        if exam is None:
-            raise serializers.ValidationError("آزمون مشخص نشده است.")
-
-        if not (
-                user.user_type == 'admin' or
-                hasattr(user, 'teacher') or
-                hasattr(user, 'institute')
-        ):
+        if not (user.user_type == 'admin' or hasattr(user, 'teacher') or hasattr(user, 'institute')):
             raise serializers.ValidationError("شما اجازه ایجاد سوال را ندارید.")
 
         if hasattr(user, 'institute') and exam.classroom.teacher.institute != user.institute:
@@ -178,4 +198,28 @@ class QuestionSerializer(serializers.ModelSerializer):
         if hasattr(user, 'teacher') and exam.classroom.teacher != user.teacher:
             raise serializers.ValidationError("شما فقط می‌توانید برای کلاس خودتان سوال بسازید.")
 
+        attrs['exam'] = exam
         return attrs
+
+    def create(self, validated_data):
+        return super().create(validated_data)
+
+
+class OptionSerializer(serializers.ModelSerializer):
+    question = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = models.Option
+        fields = ['id', 'question', 'text', 'is_correct']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        user = request.user if request else None
+        instance = kwargs.get('instance')
+
+        if hasattr(user, 'student') and instance:
+            exam = instance.question.exam
+            now = dj_timezone.now()
+            if now < exam.end_time:
+                self.fields.pop('is_correct', None)

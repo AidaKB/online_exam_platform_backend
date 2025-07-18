@@ -64,7 +64,7 @@ class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
         if getattr(user, 'user_type', None) == 'admin':
             serializer.save()
 
-        elif hasattr(user, 'institute') and classroom.institute == user.institute:
+        elif hasattr(user, 'institute') and classroom.teacher.institute == user.institute:
             serializer.save()
 
         elif hasattr(user, 'teacher') and classroom.teacher == user.teacher:
@@ -197,16 +197,7 @@ class ExamListCreateAPIView(generics.ListCreateAPIView):
         return models.Exam.objects.none()
 
     def perform_create(self, serializer):
-        user = self.request.user
-
-        if hasattr(user, 'teacher'):
-            serializer.save(creator=user)
-        elif hasattr(user, 'institute'):
-            serializer.save(creator=user)
-        elif user.user_type == 'admin':
-            serializer.save(creator=user)
-        else:
-            raise PermissionDenied("شما اجازه ساخت آزمون را ندارید.")
+        serializer.save()
 
 
 class ExamDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -245,36 +236,65 @@ class QuestionListCreateAPIView(generics.ListCreateAPIView):
 
 class QuestionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.QuestionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.IsAdminOrInstituteOrTeacherForQuestion]
 
     def get_queryset(self):
         return models.Question.objects.select_related('exam__classroom__teacher__institute')
 
-    def get_object(self):
-        user = self.request.user
-        question = super().get_object()
-        exam = question.exam
-        classroom = exam.classroom
-        teacher = classroom.teacher
-        institute = teacher.institute
 
-        if hasattr(user, 'student'):
-            if institute == user.student.institute:
-                if self.request.method in ('GET',):
-                    return question
-                raise PermissionDenied("دانش‌آموز فقط می‌تواند سوالات آزمون خود را مشاهده کند.")
+class OptionListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.OptionSerializer
+    permission_classes = [IsAuthenticated, permissions.OptionPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+        question_id = self.kwargs.get('question_id')
+        queryset = models.Option.objects.filter(question_id=question_id)
+
+        if user.is_superuser:
+            return queryset
 
         elif hasattr(user, 'teacher'):
-            if teacher == user.teacher:
-                return question
-            raise PermissionDenied("شما فقط به سوالات آزمون‌های خودتان دسترسی دارید.")
+            return queryset.filter(question__exam__classroom__teacher=user.teacher)
 
         elif hasattr(user, 'institute'):
-            if institute == user.institute:
-                return question
-            raise PermissionDenied("این سوال متعلق به موسسه شما نیست.")
+            return queryset.filter(question__exam__classroom__teacher__institute=user.institute)
 
-        elif getattr(user, 'user_type', None) == 'admin':
-            return question
+        elif hasattr(user, 'student'):
+            return queryset.filter(question__exam__classroom__teacher__institute=user.student.institute)
 
-        raise PermissionDenied("شما اجازه مشاهده یا ویرایش این سوال را ندارید.")
+        return models.Option.objects.none()
+
+    def perform_create(self, serializer):
+        question_id = self.kwargs.get('question_id')
+        try:
+            question = models.Question.objects.get(pk=question_id)
+        except models.Question.DoesNotExist:
+            raise serializers.ValidationError({"question": "سوال مشخص‌شده وجود ندارد."})
+
+        serializer.save(question=question)
+
+
+class OptionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.OptionSerializer
+    permission_classes = [IsAuthenticated, permissions.OptionPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = models.Option.objects.filter(
+            question_id=self.kwargs.get('question_id')
+        ).select_related('question__exam__classroom__teacher__institute')
+
+        if user.is_superuser:
+            return queryset
+
+        elif hasattr(user, 'institute'):
+            return queryset.filter(question__exam__classroom__teacher__institute=user.institute)
+
+        elif hasattr(user, 'teacher'):
+            return queryset.filter(question__exam__classroom__teacher=user.teacher)
+
+        elif hasattr(user, 'student'):
+            return queryset.filter(question__exam__classroom__teacher__institute=user.student.institute)
+
+        return models.Option.objects.none()

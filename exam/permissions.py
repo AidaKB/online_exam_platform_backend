@@ -39,19 +39,15 @@ class IsAdminOrTeacherOrInstituteOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # همه می‌تونن گت کنن
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # ادمین دسترسی کامل دارد
         if getattr(user, 'user_type', None) == 'admin':
             return True
 
-        # اگر استاد خودش باشد
         if hasattr(user, 'teacher') and obj.teacher == user.teacher:
             return True
 
-        # اگر موسسه استاد باشد
         if hasattr(user, 'institute') and obj.teacher and obj.teacher.institute == user.institute:
             return True
 
@@ -80,33 +76,80 @@ class IsAdminOrInstituteOrCreatorTeacher(permissions.BasePermission):
 class IsAdminOrInstituteOrTeacherForQuestion(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
+        if not user.is_authenticated:
+            return False
+
         if request.method in permissions.SAFE_METHODS:
-            return user.is_authenticated
+            return True
+
         if request.method == 'POST':
-            return (
-                    user.user_type == 'admin' or
-                    hasattr(user, 'teacher') or
-                    hasattr(user, 'institute')
-            )
-        return False
+            return user.user_type == 'admin' or hasattr(user, 'teacher') or hasattr(user, 'institute')
+
+        return True
 
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # ادمین همه دسترسی‌ها را دارد
         if user.user_type == 'admin':
             return True
 
-        # موسسه فقط به سوالاتی که موسسه‌اش است دسترسی دارد
         if hasattr(user, 'institute'):
             return obj.exam.classroom.teacher.institute == user.institute
 
-        # استاد فقط سوالاتی که مربوط به کلاس خودش است را می‌تواند ببینید یا ویرایش کند
         if hasattr(user, 'teacher'):
             return obj.exam.classroom.teacher == user.teacher
 
-        # دانشجو فقط سوالات مربوط به موسسه خودش را می‌تواند مشاهده کند (Retrieve, List)
         if hasattr(user, 'student') and request.method in permissions.SAFE_METHODS:
             return obj.exam.classroom.teacher.institute == user.student.institute
 
         return False
+
+
+class OptionPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user.is_authenticated:
+            return False
+
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method == "POST":
+            return (
+                    user.is_superuser or
+                    hasattr(user, 'teacher') or
+                    hasattr(user, 'institute')
+            )
+
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            return (
+                    user.is_superuser or
+                    hasattr(user, 'teacher') or
+                    hasattr(user, 'institute')
+            )
+
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        exam = obj.question.exam
+
+        if request.method in permissions.SAFE_METHODS:
+            if user.is_superuser:
+                return True
+            if hasattr(user, 'teacher') and exam.classroom.teacher == user.teacher:
+                return True
+            if hasattr(user, 'institute') and exam.classroom.teacher.institute == user.institute:
+                return True
+            if hasattr(user, 'student') and exam.classroom.teacher.institute == user.student.institute:
+                return True
+            return False
+
+        else:
+            if user.is_superuser:
+                return True
+            if hasattr(user, 'teacher') and exam.classroom.teacher == user.teacher:
+                return True
+            if hasattr(user, 'institute') and exam.classroom.teacher.institute == user.institute:
+                return True
+            return False

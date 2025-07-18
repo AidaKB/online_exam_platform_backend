@@ -15,10 +15,17 @@ urlpatterns = [
     path('exam-categories/', views.ExamCategoryListCreateAPIView.as_view(), name='exam-category'),
     path('exam-categories/<int:pk>/', views.ExamCategoryDetailAPIView.as_view(), name='exam-category-detail'),
 
-    path('exams/', views.ExamListCreateAPIView.as_view(), name='exam'),
-    path('exams/<int:pk>/', views.ExamDetailAPIView.as_view(), name='exam-detail'),
+    path('classrooms/<int:classroom_id>/exams/', views.ExamListCreateAPIView.as_view(), name='exam'),
+    path('classrooms/<int:classroom_id>/exams/<int:pk>/', views.ExamDetailAPIView.as_view(), name='exam-detail'),
 
-    path('questions/', views.QuestionListCreateAPIView.as_view(), name='question'),
-    path('questions/<int:pk>/', views.QuestionDetailAPIView.as_view(), name='question-detail'),
+    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/', views.QuestionListCreateAPIView.as_view(),
+         name='question'),
+    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:pk>/', views.QuestionDetailAPIView.as_view()
+         , name='question-detail'),
+
+    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/options/'
+         , views.OptionListCreateAPIView.as_view(), name='option'),
+    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/options/<int:pk>'
+         , views.OptionDetailAPIView.as_view(), name='option'),
 
 ]
