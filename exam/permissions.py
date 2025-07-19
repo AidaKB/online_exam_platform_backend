@@ -153,3 +153,44 @@ class OptionPermission(permissions.BasePermission):
             if hasattr(user, 'institute') and exam.classroom.teacher.institute == user.institute:
                 return True
             return False
+
+
+class UserAnswerPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user.is_authenticated:
+            return False
+
+        if request.method == "POST":
+            return user.is_superuser or hasattr(user, 'student')
+
+        if request.method in permissions.SAFE_METHODS or request.method in ["PUT", "PATCH"]:
+            return (
+                    user.is_superuser or
+                    hasattr(user, 'student') or
+                    hasattr(user, 'teacher') or
+                    hasattr(user, 'institute')
+            )
+
+        if request.method == "DELETE":
+            return user.is_superuser
+
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if request.method in permissions.SAFE_METHODS or request.method in ["PUT", "PATCH"]:
+            if user.is_superuser:
+                return True
+            if hasattr(user, 'student') and obj.user == user.student:
+                return True
+            if hasattr(user, 'teacher') and obj.question.exam.classroom.teacher == user.teacher:
+                return True
+            if hasattr(user, 'institute') and obj.question.exam.classroom.teacher.institute == user.institute:
+                return True
+
+        if request.method == "DELETE":
+            return user.is_superuser
+
+        return False

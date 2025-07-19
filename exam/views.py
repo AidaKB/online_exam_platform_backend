@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from . import models
 from . import serializers
@@ -298,3 +298,77 @@ class OptionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return queryset.filter(question__exam__classroom__teacher__institute=user.student.institute)
 
         return models.Option.objects.none()
+
+
+class UserAnswerListCreateAPIView(generics.ListCreateAPIView):
+    queryset = models.UserAnswer.objects.select_related(
+        'question__exam__classroom__teacher__institute', 'user'
+    )
+    serializer_class = serializers.UserAnswerSerializer
+    permission_classes = [permissions.UserAnswerPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.UserAnswer.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.UserAnswer.objects.filter(
+                question__exam__classroom__teacher__institute=user.institute)
+
+        if hasattr(user, 'teacher'):
+            return models.UserAnswer.objects.filter(
+                question__exam__classroom__teacher=user.teacher)
+
+        if hasattr(user, 'student'):
+            return models.UserAnswer.objects.filter(user=user.student)
+
+        return models.UserAnswer.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        question = serializer.validated_data['question']
+
+        if question.question_type != 'Descriptive':
+            raise ValidationError("فقط برای سوالات تشریحی می‌توانید پاسخ ثبت کنید.")
+
+        if hasattr(user, 'student'):
+            if question.exam.classroom.teacher.institute != user.student.institute:
+                raise ValidationError("شما مجاز به پاسخ به این سوال نیستید.")
+            serializer.save(user=user.student)
+
+        elif user.is_superuser:
+            if 'user' not in serializer.validated_data:
+                raise ValidationError("ادمین باید دانش‌آموز را مشخص کند.")
+            serializer.save()
+
+        else:
+            raise ValidationError("فقط دانش‌آموز یا ادمین می‌توانند پاسخ ثبت کنند.")
+
+
+class UserAnswerDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.UserAnswer.objects.select_related(
+        'question__exam__classroom__teacher__institute', 'user'
+    )
+    serializer_class = serializers.UserAnswerSerializer
+    permission_classes = [permissions.UserAnswerPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.UserAnswer.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.UserAnswer.objects.filter(
+                question__exam__classroom__teacher__institute=user.institute)
+
+        if hasattr(user, 'teacher'):
+            return models.UserAnswer.objects.filter(
+                question__exam__classroom__teacher=user.teacher)
+
+        if hasattr(user, 'student'):
+            return models.UserAnswer.objects.filter(user=user.student)
+
+        return models.UserAnswer.objects.none()

@@ -76,7 +76,7 @@ class Question(models.Model):
         verbose_name_plural = "سوالات"
 
     def __str__(self):
-        return f"سوال {self.id} - {self.exam.title}"
+        return f" {self.text} - {self.exam.title}"
 
 
 class Option(models.Model):

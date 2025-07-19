@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 from . import models
 from core import serializers as core_serializers
 from django.utils import timezone as dj_timezone
@@ -223,3 +225,56 @@ class OptionSerializer(serializers.ModelSerializer):
             now = dj_timezone.now()
             if now < exam.end_time:
                 self.fields.pop('is_correct', None)
+
+
+class UserAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserAnswer
+        fields = ['id', 'user', 'question', 'answer_text', 'score']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context['request'].user
+        is_create = self.instance is None
+
+        if hasattr(user, 'student') and is_create:
+            self.fields.pop('score')
+
+    def get_fields(self):
+        fields = super().get_fields()
+        user = self.context['request'].user
+        if self.instance and hasattr(user, 'student'):
+            fields['score'].read_only = True
+        return fields
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        question = attrs.get('question') or (self.instance.question if self.instance else None)
+
+        if self.instance is None:
+            if hasattr(user, 'student'):
+                already_exists = models.UserAnswer.objects.filter(
+                    question=question,
+                    user=user.student
+                ).exists()
+                if already_exists:
+                    raise serializers.ValidationError("شما قبلاً به این سوال پاسخ داده‌اید.")
+
+            elif user.is_superuser:
+                target_user = attrs.get('user')
+                if target_user:
+                    already_exists = models.UserAnswer.objects.filter(
+                        question=question,
+                        user=target_user
+                    ).exists()
+                    if already_exists:
+                        raise serializers.ValidationError("این دانش‌آموز قبلاً به این سوال پاسخ داده است.")
+
+        if self.instance and not hasattr(user, 'student'):
+            score = attrs.get('score')
+            if score is not None and score > self.instance.question.score:
+                raise serializers.ValidationError(
+                    {"score": f"نمره واردشده نباید بیشتر از {self.instance.question.score} باشد."}
+                )
+
+        return attrs
