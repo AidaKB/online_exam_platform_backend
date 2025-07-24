@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from exam.models import UserOptions
+from exam.models import UserOptions, Feedback
 
 
 class IsTeacherOrInstituteOrAdmin(permissions.BasePermission):
@@ -222,5 +222,42 @@ class UserOptionsPermission(permissions.BasePermission):
 
         if request.method in permissions.SAFE_METHODS:
             return True
+
+        return False
+
+
+class FeedbackPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+
+        if request.method == 'POST':  # create
+            return user.is_superuser or hasattr(user, 'student')
+
+        if request.method in ['GET']:  # list or retrieve
+            return True
+
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            return user.is_superuser or hasattr(user, 'student')
+
+        return False
+
+    def has_object_permission(self, request, view, obj: Feedback):
+        user = request.user
+
+        if request.method == 'GET':  # retrieve
+            if user.is_superuser:
+                return True
+            if hasattr(user, 'institute'):
+                return obj.exam.classroom.teacher.institute == user.institute
+            if hasattr(user, 'teacher'):
+                return obj.exam.classroom.teacher == user.teacher
+            if hasattr(user, 'student'):
+                return obj.user == user.student
+
+        if request.method in ['PUT', 'PATCH']:
+            return user.is_superuser or (hasattr(user, 'student') and obj.user == user.student)
+
+        if request.method == 'DELETE':
+            return user.is_superuser or (hasattr(user, 'student') and obj.user == user.student)
 
         return False

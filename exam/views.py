@@ -424,3 +424,47 @@ class UserOptionsDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return models.UserOptions.objects.filter(user=user.student)
 
         return models.UserOptions.objects.none()
+
+
+class FeedbackListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = [IsAuthenticated, permissions.FeedbackPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.Feedback.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.Feedback.objects.filter(exam__classroom__teacher__institute=user.institute)
+
+        if hasattr(user, 'teacher'):
+            return models.Feedback.objects.filter(exam__classroom__teacher=user.teacher)
+
+        if hasattr(user, 'student'):
+            return models.Feedback.objects.filter(user=user.student)
+
+        return models.Feedback.objects.none()
+
+
+class FeedbackDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = [IsAuthenticated, permissions.FeedbackPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.Feedback.objects.all()
+
+        if hasattr(user, 'institute'):
+            return models.Feedback.objects.filter(exam__classroom__teacher__institute=user.institute)
+
+        if hasattr(user, 'teacher'):
+            return models.Feedback.objects.filter(exam__classroom__teacher=user.teacher)
+
+        if hasattr(user, 'student'):
+            return models.Feedback.objects.filter(user=user.student)
+
+        return models.Feedback.objects.none()

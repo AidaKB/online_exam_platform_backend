@@ -281,8 +281,7 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
 
 class UserOptionsSerializer(serializers.ModelSerializer):
-    question = QuestionSerializer(read_only=True)
-    question_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = models.UserOptions
         fields = ['id', 'user', 'question', 'answer_option']
@@ -307,3 +306,15 @@ class UserOptionsSerializer(serializers.ModelSerializer):
 
         return attrs
 
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Feedback
+        fields = '__all__'
+        read_only_fields = ['user']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if hasattr(user, 'student'):
+            validated_data['user'] = user.student
+        return super().create(validated_data)
