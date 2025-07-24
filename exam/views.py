@@ -372,3 +372,55 @@ class UserAnswerDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return models.UserAnswer.objects.filter(user=user.student)
 
         return models.UserAnswer.objects.none()
+
+
+class UserOptionsListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.UserOptionsSerializer
+    permission_classes = [IsAuthenticated, permissions.UserOptionsPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.UserOptions.objects.all()
+
+        elif hasattr(user, 'institute'):
+            return models.UserOptions.objects.filter(
+                question__exam__classroom__teacher__institute=user.institute
+            )
+
+        elif hasattr(user, 'teacher'):
+            return models.UserOptions.objects.filter(
+                question__exam__classroom__teacher=user.teacher
+            )
+
+        elif hasattr(user, 'student'):
+            return models.UserOptions.objects.filter(user=user.student)
+
+        return models.UserOptions.objects.none()
+
+
+class UserOptionsDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.UserOptionsSerializer
+    permission_classes = [IsAuthenticated, permissions.UserOptionsPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.UserOptions.objects.all()
+
+        elif hasattr(user, 'institute'):
+            return models.UserOptions.objects.filter(
+                question__exam__classroom__teacher__institute=user.institute
+            )
+
+        elif hasattr(user, 'teacher'):
+            return models.UserOptions.objects.filter(
+                question__exam__classroom__teacher=user.teacher
+            )
+
+        elif hasattr(user, 'student'):
+            return models.UserOptions.objects.filter(user=user.student)
+
+        return models.UserOptions.objects.none()

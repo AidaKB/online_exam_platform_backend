@@ -278,3 +278,32 @@ class UserAnswerSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
+
+
+class UserOptionsSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer(read_only=True)
+    question_id = serializers.IntegerField(write_only=True)
+    class Meta:
+        model = models.UserOptions
+        fields = ['id', 'user', 'question', 'answer_option']
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        question = attrs.get('question')
+
+        if question.question_type not in ['MultipleChoice', 'TrueFalse']:
+            raise serializers.ValidationError('فقط سوالات تستی قابل پاسخ‌دهی هستند.')
+
+        if hasattr(user, 'student'):
+            if question.exam.classroom.teacher.institute != user.student.institute:
+                raise serializers.ValidationError('شما اجازه پاسخ به این سوال را ندارید.')
+            attrs['user'] = user.student
+
+        elif user.is_superuser:
+            if 'user' not in attrs:
+                raise serializers.ValidationError('ارسال دانش‌آموز الزامی است.')
+        else:
+            raise serializers.ValidationError('شما اجازه انجام این عملیات را ندارید.')
+
+        return attrs
+

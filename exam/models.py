@@ -105,7 +105,6 @@ class UserAnswer(models.Model):
 
 class UserOptions(models.Model):
     user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش‌آموز")
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="آزمون")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name="سوال")
     answer_option = models.ForeignKey(Option, on_delete=models.CASCADE, verbose_name="پاسخ داده شده")
 

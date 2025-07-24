@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from exam.models import UserOptions
+
 
 class IsTeacherOrInstituteOrAdmin(permissions.BasePermission):
 
@@ -173,7 +175,7 @@ class UserAnswerPermission(permissions.BasePermission):
             )
 
         if request.method == "DELETE":
-            return user.is_superuser
+            return user.is_superuser or hasattr(user, 'student')
 
         return False
 
@@ -192,5 +194,33 @@ class UserAnswerPermission(permissions.BasePermission):
 
         if request.method == "DELETE":
             return user.is_superuser
+
+        return False
+
+
+class UserOptionsPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return request.user.is_superuser or hasattr(request.user, 'student')
+
+        if request.method in permissions.SAFE_METHODS:  # GET, HEAD, OPTIONS
+            return True
+
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            return request.user.is_superuser or hasattr(request.user, 'student')
+
+        return False
+
+    def has_object_permission(self, request, view, obj: UserOptions):
+        user = request.user
+
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            if user.is_superuser:
+                return True
+            if hasattr(user, 'student'):
+                return obj.user == user.student
+
+        if request.method in permissions.SAFE_METHODS:
+            return True
 
         return False

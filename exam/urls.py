@@ -31,4 +31,7 @@ urlpatterns = [
     path('answers/', views.UserAnswerListCreateAPIView.as_view(), name='user-answer'),
     path('answers/<int:pk>/', views.UserAnswerDetailAPIView.as_view(), name='user-answer-detail'),
 
+    path('options-answers/', views.UserOptionsListCreateAPIView.as_view(), name='user-option-answer'),
+    path('options-answers/<int:pk>/', views.UserOptionsDetailAPIView.as_view(), name='user-option-answer-detail'),
+
 ]
