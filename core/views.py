@@ -6,9 +6,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminOrInstituteSelf, IsAdminOrTeacherSelf, IsAdminOrStudentOrInstituteSelf
-from core import serializers
+from core import serializers, filters
 from . import models
 from .serializers import CustomLoginSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 
 
 class AdminSignUpAPIView(generics.CreateAPIView):
@@ -23,6 +25,12 @@ class InstituteListAPIView(generics.ListAPIView):
     serializer_class = serializers.InstituteSerializer
     queryset = models.Institute.objects.all()
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.InstituteFilter
+
+    search_fields = ['name', 'registration_code', 'phone', 'account__email']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['-created_at']
 
 
 class InstituteRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -66,6 +74,12 @@ class TeacherListAPIView(generics.ListAPIView):
     serializer_class = serializers.TeacherSerializer
     queryset = models.Teacher.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.TeacherFilter
+
+    search_fields = ['account__email', 'account__first_name', 'account__last_name', 'expertise', 'national_code']
+    ordering_fields = ['created_at', 'account__first_name']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         user = self.request.user
@@ -123,6 +137,12 @@ class StudentListAPIView(generics.ListAPIView):
     serializer_class = serializers.StudentSerializer
     queryset = models.Student.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.StudentFilter
+
+    search_fields = ['account__first_name', 'account__last_name', 'account__email', 'national_code', 'phone_number']
+    ordering_fields = ['created_at', 'date_of_birth', 'account__first_name']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         user = self.request.user

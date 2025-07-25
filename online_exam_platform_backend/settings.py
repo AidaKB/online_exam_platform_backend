@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'drf_yasg',
     'corsheaders',
+    'django_filters',
 
     'core',
     'exam',
@@ -133,4 +134,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'core.CustomUser'
-CORS_ALLOW_ALL_ORIGINS = True  # just for test
+CORS_ALLOW_ALL_ORIGINS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}

@@ -3,15 +3,40 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 from . import models
 from . import serializers
 from . import permissions
+from . import filters
 from .models import Major
 
 
 class ClassroomListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.ClassroomSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.ClassroomFilter
+
+    search_fields = [
+        'name',
+        'grade',
+        'teacher__account__first_name',
+        'teacher__account__last_name',
+        'teacher__phone_number',
+        'teacher__institute__name',
+    ]
+
+    ordering_fields = [
+        'name',
+        'grade',
+        'teacher__account__first_name',
+        'teacher__account__last_name',
+        'teacher__phone_number',
+        'teacher__institute__name',
+    ]
+
+    ordering = ['name']
 
     def get_queryset(self):
         user = self.request.user
@@ -39,6 +64,25 @@ class ClassroomDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.StudentClassroomSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.StudentClassroomFilter
+    search_fields = [
+        'classroom__name',
+        'classroom__grade',
+        'classroom__teacher__account__first_name',
+        'classroom__teacher__account__last_name',
+        'student__account__first_name',
+        'student__account__last_name',
+    ]
+    ordering_fields = [
+        'classroom__name',
+        'classroom__grade',
+        'classroom__teacher__account__first_name',
+        'classroom__teacher__account__last_name',
+        'student__account__first_name',
+        'student__account__last_name',
+    ]
+    ordering = ['classroom__name']  # پیش‌فرض
 
     def get_queryset(self):
         user = self.request.user
@@ -107,6 +151,12 @@ class MajorListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.MajorSerializer
     permission_classes = [IsAuthenticated]
     queryset = Major.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.MajorFilter
+
+    search_fields = ['name']
+    ordering_fields = ['name']
+    ordering = ['name']  # مقدار پیش‌فرض مرتب‌سازی
 
 
 class MajorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -117,6 +167,23 @@ class MajorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class ExamCategoryListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.ExamCategorySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.ExamCategoryFilter
+    search_fields = [
+        'name',
+        'creator__first_name',
+        'creator__last_name',
+        'creator__username',
+        'creator__user_type',
+    ]
+    ordering_fields = [
+        'name',
+        'creator__first_name',
+        'creator__last_name',
+        'creator__username',
+        'creator__user_type',
+    ]
+    ordering = ['name']
 
     def get_queryset(self):
         user = self.request.user
@@ -172,6 +239,31 @@ class ExamCategoryDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class ExamListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.ExamSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.ExamFilter
+
+    search_fields = [
+        'title',
+        'description',
+        'category__name',
+        'creator__first_name',
+        'creator__last_name',
+        'classroom__name',
+    ]
+
+    ordering_fields = [
+        'title',
+        'start_time',
+        'end_time',
+        'duration_minutes',
+        'status',
+        'category__name',
+        'creator__first_name',
+        'creator__last_name',
+        'classroom__name',
+    ]
+
+    ordering = ['start_time']
 
     def get_queryset(self):
         user = self.request.user
@@ -209,6 +301,34 @@ class ExamDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class QuestionListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.QuestionSerializer
     permission_classes = [IsAuthenticated, permissions.IsAdminOrInstituteOrTeacherForQuestion]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.QuestionFilter
+
+    search_fields = [
+        'text',
+        'question_type',
+        'exam__title',
+        'exam__description',
+        'exam__classroom__name',
+        'exam__classroom__grade',
+        'exam__category__name',
+        'exam__creator__first_name',
+        'exam__creator__last_name',
+    ]
+
+    ordering_fields = [
+        'text',
+        'question_type',
+        'score',
+        'exam__title',
+        'exam__start_time',
+        'exam__end_time',
+        'exam__classroom__name',
+        'exam__creator__first_name',
+        'exam__creator__last_name',
+    ]
+
+    ordering = ['exam__start_time']
 
     def get_queryset(self):
         user = self.request.user
@@ -245,6 +365,23 @@ class QuestionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class OptionListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.OptionSerializer
     permission_classes = [IsAuthenticated, permissions.OptionPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.OptionFilter
+
+    search_fields = [
+        'text',
+        'question__text',
+        'question__exam__title',
+    ]
+
+    ordering_fields = [
+        'text',
+        'is_correct',
+        'question__text',
+        'question__exam__title',
+    ]
+
+    ordering = ['text']
 
     def get_queryset(self):
         user = self.request.user
@@ -306,6 +443,29 @@ class UserAnswerListCreateAPIView(generics.ListCreateAPIView):
     )
     serializer_class = serializers.UserAnswerSerializer
     permission_classes = [permissions.UserAnswerPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.UserAnswerFilter
+
+    search_fields = [
+        'answer_text',
+        'user__account__first_name',
+        'user__account__last_name',
+        'user__national_code',
+        'question__text',
+        'question__exam__title',
+        'question__exam__classroom__name',
+        'question__exam__classroom__teacher__institute__name',
+    ]
+
+    ordering_fields = [
+        'score',
+        'user__account__first_name',
+        'user__account__last_name',
+        'question__text',
+        'question__exam__title',
+    ]
+
+    ordering = ['-score']
 
     def get_queryset(self):
         user = self.request.user
@@ -377,6 +537,28 @@ class UserAnswerDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class UserOptionsListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.UserOptionsSerializer
     permission_classes = [IsAuthenticated, permissions.UserOptionsPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.UserOptionsFilter
+
+    search_fields = [
+        'user__account__first_name',
+        'user__account__last_name',
+        'user__national_code',
+        'question__text',
+        'question__exam__title',
+        'question__exam__classroom__name',
+        'answer_option__text',
+    ]
+
+    ordering_fields = [
+        'user__account__first_name',
+        'user__account__last_name',
+        'question__text',
+        'answer_option__text',
+        'question__exam__title',
+    ]
+
+    ordering = ['user__account__last_name']
 
     def get_queryset(self):
         user = self.request.user
@@ -429,6 +611,25 @@ class UserOptionsDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 class FeedbackListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.FeedbackSerializer
     permission_classes = [IsAuthenticated, permissions.FeedbackPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.FeedbackFilter
+
+    search_fields = [
+        'user__account__first_name',
+        'user__account__last_name',
+        'user__national_code',
+        'exam__title',
+        'exam__classroom__name',
+        'text',
+    ]
+
+    ordering_fields = [
+        'user__account__first_name',
+        'user__account__last_name',
+        'exam__title',
+    ]
+
+    ordering = ['user__account__last_name']
 
     def get_queryset(self):
         user = self.request.user
