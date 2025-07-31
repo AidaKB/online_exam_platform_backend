@@ -51,11 +51,12 @@ class Exam(models.Model):
     start_time = models.DateTimeField(verbose_name="زمان شروع")
     end_time = models.DateTimeField(verbose_name="زمان پایان")
     duration_minutes = models.PositiveIntegerField(verbose_name="مدت زمان (دقیقه)")
+    result_show_time = models.DateTimeField(null=True, blank=True, verbose_name="زمان نمایش نتایج آزمون")
     status = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
     category = models.ForeignKey(ExamCategory, on_delete=models.SET_NULL, null=True, verbose_name="دسته‌بندی")
-    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="سازنده آزمون")
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name="exams",
                                   verbose_name="کلاس مرتبط")
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="سازنده آزمون")
 
     class Meta:
         verbose_name = "آزمون"
@@ -96,7 +97,7 @@ class UserAnswer(models.Model):
     user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش‌آموز")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name="سوال")
     answer_text = models.TextField(verbose_name="پاسخ داده‌شده")
-    score = models.FloatField(null=True, blank=True, verbose_name="نمره اختصاص داده‌شده")
+    score = models.FloatField(default=0, verbose_name="نمره اختصاص داده‌شده")
 
     class Meta:
         verbose_name = "پاسخ دانش‌آموز"
@@ -111,6 +112,16 @@ class UserOptions(models.Model):
     class Meta:
         verbose_name = "پاسخ تستی دانش‌آموز"
         verbose_name_plural = "پاسخ‌های تستی دانش‌آموزان"
+
+
+class UserExamResult(models.Model):
+    user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش آموز")
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    score = models.FloatField(default=0, verbose_name="نمره نهایی")
+
+    class Meta:
+        verbose_name = "نمره نهایی دانش آموز/دانشجو"
+        verbose_name_plural = "نمره های نهایی دانش آموز/دانشجو"
 
 
 class Feedback(models.Model):

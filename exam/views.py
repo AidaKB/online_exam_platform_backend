@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -606,6 +607,85 @@ class UserOptionsDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return models.UserOptions.objects.filter(user=user.student)
 
         return models.UserOptions.objects.none()
+
+
+class UserExamResultListAPIView(generics.ListAPIView):
+    serializer_class = serializers.UserExamResultSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['user', 'exam', 'score', 'exam__classroom', 'exam__classroom__teacher',
+                        'exam__result_show_time']
+
+    search_fields = [
+        'user__account__first_name', 'user__account__last_name', 'user__account__username',
+        'exam__title', 'exam__classroom__name',
+        'exam__classroom__teacher__account__first_name',
+        'exam__classroom__teacher__account__last_name'
+    ]
+
+    ordering_fields = ['score', 'exam__result_show_time', 'exam__title', 'user', 'exam']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return models.UserExamResult.objects.all()
+
+        elif hasattr(user, 'institute'):
+            return models.UserExamResult.objects.filter(
+                exam__classroom__teacher__institute=user.institute
+            )
+
+        elif hasattr(user, 'teacher'):
+            return models.UserExamResult.objects.filter(
+                exam__classroom__teacher=user.teacher
+            )
+
+
+        elif hasattr(user, 'student'):
+            now = timezone.now()
+
+            return models.UserExamResult.objects.filter(
+                user=user.student
+            ).filter(
+
+                Q(exam__result_show_time__lte=now) | Q(exam__result_show_time__isnull=True)
+            )
+        return models.UserExamResult.objects.none()
+
+
+class UserExamResultDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.UserExamResult.objects.select_related('exam__classroom__teacher', 'user')
+    serializer_class = serializers.UserExamResultSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        obj = super().get_object()
+        user = self.request.user
+
+        if user.is_superuser:
+            return obj
+
+        if hasattr(user, 'institute'):
+            if obj.exam.classroom.teacher.institute == user.institute:
+                return obj
+            raise PermissionDenied("شما به این نتیجه دسترسی ندارید.")
+
+        if hasattr(user, 'teacher'):
+            if obj.exam.classroom.teacher == user.teacher:
+                return obj
+            raise PermissionDenied("شما به این نتیجه دسترسی ندارید.")
+
+        if hasattr(user, 'student'):
+            if obj.user == user.student:
+                now = timezone.now()
+                if obj.exam.result_show_time is None or obj.exam.result_show_time <= now:
+                    if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+                        raise PermissionDenied("شما اجازه ویرایش یا حذف این نتیجه را ندارید.")
+                    return obj
+                raise PermissionDenied("هنوز زمان مشاهده نتیجه این آزمون فرا نرسیده است.")
+
+        raise PermissionDenied("شما اجازه دسترسی به این نتیجه را ندارید.")
 
 
 class FeedbackListCreateAPIView(generics.ListCreateAPIView):

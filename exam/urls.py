@@ -37,4 +37,7 @@ urlpatterns = [
     path('feedbackes/', views.FeedbackListCreateAPIView.as_view(), name='feedback'),
     path('feedbackes/<int:pk>/', views.FeedbackDetailAPIView.as_view(), name='feedback-detail'),
 
+    path('user-exam-results/', views.UserExamResultListAPIView.as_view(), name='exam-results'),
+    path('user-exam-results/<int:pk>/', views.UserExamResultDetailAPIView.as_view(), name='feedback-detail'),
+
 ]

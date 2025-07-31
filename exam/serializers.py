@@ -138,10 +138,14 @@ class ExamSerializer(serializers.ModelSerializer):
 
         start_time = attrs.get('start_time')
         end_time = attrs.get('end_time')
+        result_show_time = attrs.get('result_show_time')
         duration_minutes = attrs.get('duration_minutes')
 
         if start_time >= end_time:
             raise serializers.ValidationError("زمان شروع باید قبل از زمان پایان باشد.")
+
+        if start_time < end_time:
+            raise serializers.ValidationError("زمان نمایش پاسخ نباید زودتر از زمان اتمام آزمون باشد.")
 
         total_duration = (end_time - start_time).total_seconds() / 60
         if duration_minutes > total_duration:
@@ -279,9 +283,30 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def update(self, instance, validated_data):
+        old_score = instance.score
+        new_score = validated_data.get('score', old_score)
+
+        response = super().update(instance, validated_data)
+
+        if old_score != new_score:
+            if new_score > self.instance.question.score:
+                raise serializers.ValidationError({
+                    "score": f"نمره واردشده نمی‌تواند بیشتر از {self.instance.question.score} باشد."
+                })
+
+            student = instance.user
+            exam = instance.question.exam
+
+            result, created = models.UserExamResult.objects.get_or_create(user=student, exam=exam)
+
+            result.score = result.score - old_score + new_score
+            result.save()
+
+        return response
+
 
 class UserOptionsSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.UserOptions
         fields = ['id', 'user', 'question', 'answer_option']
@@ -305,6 +330,45 @@ class UserOptionsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('شما اجازه انجام این عملیات را ندارید.')
 
         return attrs
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        self._update_exam_score(instance, None)
+        return instance
+
+    def update(self, instance, validated_data):
+        old_option = instance.answer_option
+        instance = super().update(instance, validated_data)
+        self._update_exam_score(instance, old_option)
+        return instance
+
+    def _update_exam_score(self, instance, old_option):
+        student = instance.user
+        exam = instance.question.exam
+        question_score = instance.question.score
+        new_option = instance.answer_option
+
+        exam_result, created = models.UserExamResult.objects.get_or_create(
+            user=student, exam=exam,
+            defaults={'score': 0}
+        )
+
+        old_correct = old_option.is_correct if old_option else False
+        new_correct = new_option.is_correct
+
+        if not old_correct and new_correct:
+            exam_result.score += question_score
+            exam_result.save()
+
+        elif old_correct and not new_correct:
+            exam_result.score -= question_score
+            exam_result.save()
+
+
+class UserExamResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserExamResult
+        fields = ['id', 'user', 'exam', 'score']
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
