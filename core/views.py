@@ -11,6 +11,8 @@ from . import models
 from .serializers import CustomLoginSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 class AdminSignUpAPIView(generics.CreateAPIView):
@@ -192,6 +194,7 @@ class StudentRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class CustomLoginView(LoginView):
     serializer_class = CustomLoginSerializer
 
