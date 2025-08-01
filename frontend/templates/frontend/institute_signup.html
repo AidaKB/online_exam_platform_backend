@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت‌نام موسسات | پابا</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+    <section class="form-container">
+        <div class="logo-container" style="text-align:center; margin-bottom: 1rem;">
+        <img src="{% static 'frontend/images/logo.svg' %}" alt="لوگو پابا" style="height: 60px;"/>
+        </div>
+        <h2>فرم ثبت‌نام موسسات</h2>
+        <form id="institute-signup-form">
+            <input type="text" name="username" placeholder="نام کاربری" required>
+            <input type="email" name="email" placeholder="ایمیل" required>
+            <input type="password" name="password" placeholder="رمز عبور" required>
+            <input type="password" name="password2" placeholder="تکرار رمز عبور" required>
+
+            <input type="text" name="institute_name" placeholder="نام آموزشگاه" required>
+            <input type="text" name="registration_code" placeholder="کد ثبت آموزشگاه" required>
+            <input type="text" name="address" placeholder="آدرس" required>
+            <input type="text" name="phone" placeholder="شماره تماس" required>
+            <input type="url" name="website" placeholder="وب‌سایت (اختیاری)">
+
+            <button type="submit">ثبت‌نام</button>
+        </form>
+        <div id="message"></div>
+    </section>
+
+    <script>
+        document.getElementById("institute-signup-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch("http://localhost:8000/api/core/auth/signup/institute/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+            if (response.ok) {
+                document.getElementById("message").className = "";
+                document.getElementById("message").innerText = "ثبت‌نام با موفقیت انجام شد.";
+                form.reset();
+            } else {
+                document.getElementById("message").className = "error";
+                document.getElementById("message").innerText = JSON.stringify(result);
+            }
+            } catch (error) {
+                document.getElementById("message").innerText = "خطا در ارسال اطلاعات";
+            }
+        });
+    </script>
+</body>
+</html>

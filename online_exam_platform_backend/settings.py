@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     'core',
     'exam',
+    'frontend',
 ]
 SITE_ID = 1
 
@@ -139,3 +140,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / "frontend/static"]

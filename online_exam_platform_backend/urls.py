@@ -33,6 +33,7 @@ schema_view = get_schema_view(
    permission_classes=[permissions.AllowAny],
 )
 urlpatterns = [
+    path('', include('frontend.urls')),  # صفحه لندینگ
     path('api/admin/', admin.site.urls),
     path('api/core/', include('core.urls')),
     path('api/exam/', include('exam.urls')),

@@ -157,7 +157,7 @@ class MajorListCreateAPIView(generics.ListCreateAPIView):
 
     search_fields = ['name']
     ordering_fields = ['name']
-    ordering = ['name']  # مقدار پیش‌فرض مرتب‌سازی
+    ordering = ['name']
 
 
 class MajorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):

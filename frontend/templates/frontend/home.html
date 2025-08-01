@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>پلتفرم پابا</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+
+    <header>
+        <div class="header-right">
+            <div class="logo">
+                <img src="{% static 'frontend/images/logo.svg' %}" alt="لوگو پابا">
+            </div>
+        </div>
+        <nav>
+            <a href="/login/">ورود</a>
+            <a href="/signup/institute/">ثبت‌نام</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="content">
+            <h1>پلتفرم آنلاین برگزاری آزمون پابا</h1>
+            <p>جامع‌ترین سامانه آزمون آنلاین برای مؤسسات، معلمان و دانش‌آموزان</p>
+            <a href="/signup/institute/" class="btn-primary">همین حالا شروع کنید</a>
+        </div>
+        <img src="{% static 'frontend/images/student.svg' %}" alt="دانش‌آموز">
+    </section>
+
+    <section class="features">
+        <div class="feature">🎓 ثبت‌نام نقش‌ها</div>
+        <div class="feature">📊 مشاهده کلاس‌ها</div>
+        <div class="feature">📝 طراحی آزمون</div>
+        <div class="feature">📄 تحلیل نتایج</div>
+    </section>
+
+    <footer>
+        <div class="footer-links">
+            <a href="#">درباره ما</a>
+            <a href="#">تماس با ما</a>
+        </div>
+        <div class="footer-email">
+            ایمیل پشتیبانی : <a href="mailto:aida.beheshti81@gmail.com">aida.beheshti81@gmail.com</a>
+        </div>
+        <p>تمامی حقوق محفوظ و متعلق به شرکت پابا است.</p>
+    </footer>
+
+</body>
+</html>

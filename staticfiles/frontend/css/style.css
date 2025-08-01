@@ -1,0 +1,204 @@
+@font-face {
+    font-family: 'IRANSans';
+    src: url('../fonts/Iranian Sans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'IRANSans', Tahoma, sans-serif;
+    background: linear-gradient(
+        135deg,
+        #3498DB 0%,
+        #2C3E50 40%,
+        #F1C40F 80%,
+        #FFFFFF 100%
+    );    color: #2c3e50;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #3498db;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo img {
+    height: 40px;
+}
+
+nav a {
+    color: white;
+    margin-right: 1rem;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.hero {
+    background: #f1c40f;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.hero .content {
+    max-width: 500px;
+    text-align: right;
+}
+
+.hero img {
+    height: 200px;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.feature {
+    background: #bdc3c7;
+    padding: 1rem;
+    text-align: center;
+    border-radius: 10px;
+}
+
+footer {
+    background: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 0.95rem;
+    margin-top: auto;
+}
+
+.footer-links {
+    margin-bottom: 1rem;
+}
+
+.footer-links a {
+    color: white;
+    margin: 0 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-email a {
+    color: #f1c40f;
+    text-decoration: none;
+    font-weight: bold;
+}
+.footer-email a:hover {
+    color: #f39c12;
+}
+html, body {
+    height: 100%;
+}
+.form-container {
+    max-width: 500px;
+    margin: 4rem auto;
+    background: linear-gradient(to bottom right, #ffffff, #f0f4f8);
+    padding: 2.5rem 2rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
+    border: 1px solid #e1e8ed;
+    border-top: 5px solid #f1c40f;
+    transition: all 0.3s ease;
+}
+
+.form-container:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(44, 62, 80, 0.25);
+}
+
+
+.form-container h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.form-container h2::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #f1c40f;
+    margin: 0.5rem auto 0;
+    border-radius: 2px;
+}
+
+.form-container form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.2rem 1.5rem;
+}
+
+.form-container input {
+    padding: 0.9rem 1.2rem;
+    border: 1px solid #dcdde1;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f9f9f9;
+}
+
+.form-container input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 6px rgba(52, 152, 219, 0.4);
+    background-color: #fff;
+}
+
+.form-container button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.9rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    grid-column: 1 / -1;
+}
+
+#message {
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: bold;
+    color: green;
+}
+
+#message.error {
+    color: #e74c3c;
+}
