@@ -42,32 +42,67 @@
       const username = form.username.value;
       const password = form.password.value;
 
-      try {
-        const response = await fetch('http://localhost:8000/api/core/auth/login/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
-          },
-          credentials: 'include',
-          body: JSON.stringify({ username, password })
+        try {
+            const response = await fetch('http://localhost:8000/api/core/auth/login/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+              },
+              credentials: 'include',
+              body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              localStorage.setItem('token', data.key);
+              localStorage.setItem('user_id', data.user_id);
+
+              const userDetailResponse = await fetch(`http://localhost:8000/api/core/users/${data.user_id}/`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Token ${data.key}`,
+                },
+              });
+
+              const userData = await userDetailResponse.json();
+
+              if (userDetailResponse.ok) {
+                const userType = userData.user_type;
+
+                if (userType === 'institute') {
+                  window.location.href = '/dashboard/institute/';
+                } else if (userType === 'teacher') {
+                  window.location.href = '/dashboard/teacher/';
+                } else if (userType === 'student') {
+                  window.location.href = '/dashboard/student/';
+                } else if (userType === 'admin') {
+                  window.location.href = '/dashboard/admin/';
+                } else {
+                  messageDiv.textContent = "نوع کاربری نامعتبر است.";
+                  messageDiv.classList.add('error');
+                }
+              } else {
+                messageDiv.textContent = userData.detail || "خطا در دریافت اطلاعات کاربر.";
+                messageDiv.classList.add('error');
+              }
+
+            } else {
+              const error_message = Array.isArray(data.detail)
+                ? data.detail[0]
+                : data.detail || data.non_field_errors?.[0] || "نام کاربری یا رمز عبور اشتباه است.";
+
+              messageDiv.textContent = error_message;
+              messageDiv.classList.add('error');
+            }
+
+          } catch (error) {
+            messageDiv.textContent = "ارتباط با سرور برقرار نشد.";
+            messageDiv.classList.add('error');
+          }
         });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('token', data.key);
-          localStorage.setItem('user_id', data.user_id);
-          window.location.href = '/dashboard/';
-        } else {
-          messageDiv.textContent = data.non_field_errors?.[0] || "خطایی در ورود رخ داده است.";
-          messageDiv.classList.add('error');
-        }
-      } catch (error) {
-        messageDiv.textContent = "ارتباط با سرور برقرار نشد.";
-        messageDiv.classList.add('error');
-      }
-    });
   </script>
 </body>
 </html>

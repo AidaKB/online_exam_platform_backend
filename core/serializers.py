@@ -12,6 +12,34 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email')
 
 
+class CustomUserDetailSerializer(serializers.ModelSerializer):
+    institute = serializers.SerializerMethodField()
+    teacher = serializers.SerializerMethodField()
+    student = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'user_type',
+            'date_joined', 'last_login', 'is_active', 'institute', 'teacher', 'student'
+        ]
+
+    def get_institute(self, obj):
+        if obj.user_type == 'institute' and hasattr(obj, 'institute'):
+            return InstituteSerializer(obj.institute).data
+        return None
+
+    def get_teacher(self, obj):
+        if obj.user_type == 'teacher' and hasattr(obj, 'teacher'):
+            return TeacherSerializer(obj.teacher).data
+        return None
+
+    def get_student(self, obj):
+        if obj.user_type == 'student' and hasattr(obj, 'student'):
+            return StudentSerializer(obj.student).data
+        return None
+
+
 class AdminSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, max_length=255)
     password2 = serializers.CharField(write_only=True, max_length=255)
