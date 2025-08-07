@@ -92,6 +92,9 @@
           messageDiv.textContent = 'اطلاعات با موفقیت ذخیره شد.';
           messageDiv.classList.remove('error');
           messageDiv.classList.add('success');
+            setTimeout(() => {
+            window.location.href = '/dashboard/institute/';
+          }, 1000);
         } else {
           const errorData = await response.json();
           messageDiv.textContent = errorData.detail || 'خطا در ذخیره‌سازی اطلاعات.';
