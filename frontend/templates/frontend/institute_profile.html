@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرایش حساب موسسه</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <section class="form-container">
+    <h2>ویرایش اطلاعات موسسه</h2>
+    <form id="institute-form">
+      <input type="text" id="name" name="name" placeholder="نام موسسه" required>
+      <input type="text" id="registration_code" name="registration_code" placeholder="کد ثبت" required>
+      <input type="text" id="address" name="address" placeholder="آدرس" required>
+      <input type="text" id="phone" name="phone" placeholder="شماره تماس" required>
+      <input type="url" id="website" name="website" placeholder="وب‌سایت">
+      <button type="submit">ذخیره تغییرات</button>
+    </form>
+    <div id="message"></div>
+  </section>
+
+  <script>
+    const userId = localStorage.getItem('user_id');
+    const token = localStorage.getItem('token');
+    const messageDiv = document.getElementById('message');
+    const form = document.getElementById('institute-form');
+    let instituteId = null;
+
+    // مرحله اول: دریافت آیدی موسسه
+    async function loadInstituteInfo() {
+      try {
+        const userRes = await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+        const userData = await userRes.json();
+
+        instituteId = userData.institute?.id;
+
+        if (!instituteId) {
+          messageDiv.textContent = 'حساب موسسه یافت نشد.';
+          return;
+        }
+
+        // مرحله دوم: واکشی اطلاعات موسسه
+        const instituteRes = await fetch(`http://localhost:8000/api/core/institutes/${instituteId}/`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+
+        if (!instituteRes.ok) {
+          messageDiv.textContent = 'خطا در دریافت اطلاعات موسسه';
+          return;
+        }
+
+        const instituteData = await instituteRes.json();
+        form.name.value = instituteData.name;
+        form.registration_code.value = instituteData.registration_code;
+        form.address.value = instituteData.address;
+        form.phone.value = instituteData.phone;
+        form.website.value = instituteData.website || '';
+
+      } catch (error) {
+        messageDiv.textContent = 'خطا در بارگذاری اطلاعات';
+      }
+    }
+
+    loadInstituteInfo();
+
+    // مرحله سوم: ارسال اطلاعات آپدیت‌شده
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const payload = {
+        name: form.name.value,
+        registration_code: form.registration_code.value,
+        address: form.address.value,
+        phone: form.phone.value,
+        website: form.website.value || null
+      };
+
+      try {
+        const response = await fetch(`http://localhost:8000/api/core/institutes/${instituteId}/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          messageDiv.textContent = 'اطلاعات با موفقیت ذخیره شد.';
+          messageDiv.classList.remove('error');
+          messageDiv.classList.add('success');
+        } else {
+          const errorData = await response.json();
+          messageDiv.textContent = errorData.detail || 'خطا در ذخیره‌سازی اطلاعات.';
+          messageDiv.classList.add('error');
+        }
+      } catch (error) {
+        messageDiv.textContent = 'اتصال به سرور برقرار نشد.';
+        messageDiv.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>

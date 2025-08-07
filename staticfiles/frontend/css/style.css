@@ -191,7 +191,59 @@ html, body {
     transition: background 0.3s ease;
     grid-column: 1 / -1;
 }
+.btn-logout {
+  font-family: 'IRANSans', Tahoma, sans-serif;
+  background-color: #e74c3c;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
 
+.btn-logout:hover {
+  background-color: #c0392b;
+}
+
+.card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+  background-color: #f9f9f9;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #34495e;
+}
+.dashboard-content {
+  display: grid;
+  gap: 1rem;
+  padding: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+.card {
+  user-select: none;
+}
+@font-face {
+    font-family: 'IRANSans';
+    src: url('../fonts/Iranian Sans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 #message {
     margin-top: 1rem;
     text-align: center;
