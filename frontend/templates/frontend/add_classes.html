@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>افزودن کلاس</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <header>
+    <h1>افزودن کلاس جدید</h1>
+    <button class="btn-back" onclick="window.location.href='/dashboard/institute/classes/'">بازگشت</button>
+  </header>
+
+  <main>
+  <div class="form-container">
+    <h2>افزودن کلاس جدید</h2>
+    <form id="add-class-form">
+      <input type="text" id="name" class="form-input" placeholder="نام کلاس" required>
+
+      <select id="grade" class="form-input" required>
+        <option value="">انتخاب پایه</option>
+        <option value="first_grade">اول دبستان</option>
+        <option value="second_grade">دوم دبستان</option>
+        <option value="third_grade">سوم دبستان</option>
+        <option value="fourth_grade">چهارم دبستان</option>
+        <option value="fifth_grade">پنجم دبستان</option>
+        <option value="sixth_grade">ششم دبستان</option>
+        <option value="seventh_grade">هفتم متوسطه اول</option>
+        <option value="eighth_grade">هشتم متوسطه اول</option>
+        <option value="ninth_grade">نهم متوسطه اول</option>
+        <option value="tenth_grade">دهم متوسطه دوم</option>
+        <option value="eleventh_grade">یازدهم متوسطه دوم</option>
+        <option value="twelfth_grade">دوازدهم متوسطه دوم</option>
+        <option value="bachelor">کارشناسی</option>
+        <option value="master">کارشناسی ارشد</option>
+        <option value="phd">دکترا</option>
+      </select>
+
+      <select id="teacher" class="form-input" required></select>
+
+      <textarea id="description" class="form-input" placeholder="توضیحات"></textarea>
+
+      <button type="submit" class="btn-primary">ثبت کلاس</button>
+    </form>
+  </div>
+</main>
+
+
+  <script>
+    const API_URL = "http://localhost:8000/api/exam/classrooms/";
+    const TEACHERS_API_URL = "http://localhost:8000/api/core/teachers/";
+    const token = localStorage.getItem("token");
+
+    async function loadTeachers() {
+      try {
+        const res = await fetch(TEACHERS_API_URL, {
+          headers: { Authorization: `Token ${token}` }
+        });
+        if (!res.ok) throw new Error("خطا در دریافت لیست اساتید");
+
+        const teachers = await res.json();
+        const select = document.getElementById("teacher");
+        teachers.forEach(teacher => {
+          const option = document.createElement("option");
+          option.value = teacher.id;
+          option.textContent = `${teacher.account.first_name} ${teacher.account.last_name}`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    document.getElementById("add-class-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const grade = document.getElementById("grade").value;
+      const teacherId = document.getElementById("teacher").value;
+      const description = document.getElementById("description").value;
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`,
+          },
+          body: JSON.stringify({
+            name,
+            grade,
+            description,
+            teacher_id: teacherId
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || "ثبت کلاس با خطا مواجه شد.");
+        }
+
+        alert("کلاس با موفقیت اضافه شد.");
+        window.location.href = "/dashboard/institute/classes/";
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    window.onload = loadTeachers;
+  </script>
+</body>
+</html>

@@ -13,3 +13,7 @@ def login_view(request):
 @login_required
 def institute_dashboard(request):
     return render(request, 'frontend/institute_dashboard.html')
+
+
+def add_class_view(request):
+    return render(request, 'frontend/add_classes.html')
