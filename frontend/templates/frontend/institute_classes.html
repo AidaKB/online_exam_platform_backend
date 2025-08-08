@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>کلاس‌های من</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+  <header>
+    <h1>لیست کلاس‌ها</h1>
+        <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
+  </header>
+
+  <section class="filters">
+  <div class="filter-group">
+    <input type="text" id="name-filter" placeholder="نام کلاس" class="form-input" />
+    <select id="grade-filter" class="form-input">
+      <option value="">همه پایه‌ها</option>
+      <option value="first_grade">اول دبستان</option>
+      <option value="second_grade">دوم دبستان</option>
+      <option value="third_grade">سوم دبستان</option>
+      <option value="fourth_grade">چهارم دبستان</option>
+      <option value="fifth_grade">پنجم دبستان</option>
+      <option value="sixth_grade">ششم دبستان</option>
+      <option value="seventh_grade">هفتم متوسطه اول</option>
+      <option value="eighth_grade">هشتم متوسطه اول</option>
+      <option value="ninth_grade">نهم متوسطه اول</option>
+      <option value="tenth_grade">دهم متوسطه دوم</option>
+      <option value="eleventh_grade">یازدهم متوسطه دوم</option>
+      <option value="twelfth_grade">دوازدهم متوسطه دوم</option>
+      <option value="bachelor">کارشناسی</option>
+      <option value="master">کارشناسی ارشد</option>
+      <option value="phd">دکترا</option>
+    </select>
+    <input type="text" id="teacher-firstname-filter" placeholder="نام استاد" class="form-input" />
+    <input type="text" id="teacher-lastname-filter" placeholder="نام خانوادگی استاد" class="form-input" />
+    <input type="text" id="teacher-phone-filter" placeholder="شماره تماس استاد" class="form-input" />
+    <select id="ordering-filter" class="form-input">
+      <option value="">مرتب‌سازی</option>
+      <option value="name">نام کلاس (صعودی)</option>
+      <option value="-name">نام کلاس (نزولی)</option>
+      <option value="grade">پایه (صعودی)</option>
+      <option value="-grade">پایه (نزولی)</option>
+      <option value="teacher__account__first_name">نام استاد (صعودی)</option>
+      <option value="-teacher__account__first_name">نام استاد (نزولی)</option>
+    </select>
+    <button onclick="loadClasses()" class="btn-primary">فیلتر</button>
+  </div>
+</section>
+
+  <section>
+    <button class="btn-primary add-class-btn" onclick="window.location.href='/dashboard/institute/classes/add/'">افزودن کلاس</button>
+  </section>
+
+  <section id="class-list" class="class-list"></section>
+
+  <script>
+          const gradeMap = {
+      "first_grade": "اول دبستان",
+      "second_grade": "دوم دبستان",
+      "third_grade": "سوم دبستان",
+      "fourth_grade": "چهارم دبستان",
+      "fifth_grade": "پنجم دبستان",
+      "sixth_grade": "ششم دبستان",
+      "seventh_grade": "هفتم متوسطه اول",
+      "eighth_grade": "هشتم متوسطه اول",
+      "ninth_grade": "نهم متوسطه اول",
+      "tenth_grade": "دهم متوسطه دوم",
+      "eleventh_grade": "یازدهم متوسطه دوم",
+      "twelfth_grade": "دوازدهم متوسطه دوم",
+      "bachelor": "کارشناسی",
+      "master": "کارشناسی ارشد",
+      "phd": "دکترا"
+    };
+
+    const token = localStorage.getItem('token');
+    const API_URL = "http://localhost:8000/api/exam/classrooms/";
+
+    async function loadClasses() {
+      const name = document.getElementById("name-filter").value;
+      const grade = document.getElementById("grade-filter").value;
+      const teacherFirst = document.getElementById("teacher-firstname-filter").value;
+      const teacherLast = document.getElementById("teacher-lastname-filter").value;
+      const teacherPhone = document.getElementById("teacher-phone-filter").value;
+      const ordering = document.getElementById("ordering-filter").value;
+
+      let query = [];
+
+      if (name) query.push(`name=${encodeURIComponent(name)}`);
+      if (grade) query.push(`grade=${encodeURIComponent(grade)}`);
+      if (teacherFirst) query.push(`teacher_name=${encodeURIComponent(teacherFirst)}`);
+      if (teacherLast) query.push(`teacher_last_name=${encodeURIComponent(teacherLast)}`);
+      if (teacherPhone) query.push(`teacher_phone_number=${encodeURIComponent(teacherPhone)}`);
+      if (ordering) query.push(`ordering=${encodeURIComponent(ordering)}`);
+
+      const url = `${API_URL}?${query.join('&')}`;
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            "Authorization": `Token ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error("خطا در دریافت داده‌ها");
+
+        const data = await response.json();
+        const container = document.getElementById("class-list");
+        container.innerHTML = "";
+
+        data.forEach(cls => {
+          const div = document.createElement("div");
+          div.className = "class-card";
+          div.onclick = () => {
+            window.location.href = `/dashboard/institute/classes/${cls.id}/`;
+          };
+          div.innerHTML = `
+            <h3>${cls.name} (${gradeMap[cls.grade] || cls.grade})</h3>
+            <p><strong>استاد:</strong> ${cls.teacher.account.first_name} ${cls.teacher.account.last_name}</p>
+            <p><strong>شماره تماس:</strong> ${cls.teacher.phone_number}</p>
+            <p>${cls.description}</p>
+          `;
+          container.appendChild(div);
+        });
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+
+    window.onload = loadClasses;
+  </script>
+</body>
+</html>

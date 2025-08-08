@@ -155,6 +155,9 @@ class StudentListAPIView(generics.ListAPIView):
         if hasattr(user, 'institute'):
             return models.Student.objects.filter(institute=user.institute)
 
+        if hasattr(user, 'teacher'):
+            return models.Student.objects.filter(institute=user.teacher.institute)
+
         raise PermissionDenied("شما مجاز به مشاهده لیست دانشجویان نیستید.")
 
 

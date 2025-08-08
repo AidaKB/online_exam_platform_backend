@@ -11,5 +11,6 @@ urlpatterns = [
     path('dashboard/institute/', views.institute_dashboard, name='institute_dashboard'),
     path('dashboard/institute/profile/', TemplateView.as_view(template_name='frontend/institute_profile.html'),
          name='institute-profile'),
+    path('dashboard/institute/classes/', TemplateView.as_view(template_name="frontend/institute_classes.html")),
 
 ]
