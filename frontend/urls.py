@@ -12,7 +12,7 @@ urlpatterns = [
     path('dashboard/institute/profile/', TemplateView.as_view(template_name='frontend/institute_profile.html'),
          name='institute-profile'),
     path('dashboard/institute/classes/', TemplateView.as_view(template_name="frontend/institute_classes.html")),
-
-    path('dashboard/institute/classes/add/', views.add_class_view, name='add_class'),
+    path('dashboard/institute/classes/<int:cls_id>/',
+         TemplateView.as_view(template_name='frontend/classroom_exams.html'), name='classroom_exams'),
 
 ]

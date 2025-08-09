@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>جزئیات کلاس</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header id="class-title" class="header">
+    جزئیات کلاس
+</header>
+
+<div class="top-buttons">
+    <a id="edit-class-btn" class="btn-primary">✏️ ویرایش کلاس</a>
+    <a id="add-exam-btn" class="btn-primary">➕ افزودن آزمون</a>
+    <a id="view-students-btn" class="btn-primary">👥 مشاهده دانش‌آموزان</a>
+</div>
+
+<section class="filters">
+    <div class="filter-group">
+        <input type="text" id="title-filter" placeholder="جستجو در عنوان" class="form-input" />
+        <input type="text" id="description-filter" placeholder="جستجو در توضیحات" class="form-input" />
+        <select id="status-filter" class="form-input">
+            <option value="">همه وضعیت‌ها</option>
+            <option value="true">فعال</option>
+            <option value="false">غیرفعال</option>
+        </select>
+        <input type="datetime-local" id="start_time-filter" class="form-input" placeholder="زمان شروع" />
+        <input type="datetime-local" id="end_time-filter" class="form-input" placeholder="زمان پایان" />
+        <input type="number" id="duration_minutes-filter" min="0" placeholder="مدت زمان (دقیقه)" class="form-input" />
+        <input type="text" id="category_name-filter" placeholder="نام دسته‌بندی" class="form-input" />
+        <input type="text" id="creator_first_name-filter" placeholder="نام سازنده" class="form-input" />
+        <input type="text" id="creator_last_name-filter" placeholder="نام خانوادگی سازنده" class="form-input" />
+        <select id="ordering" class="form-input">
+            <option value="start_time">مرتب‌سازی بر اساس زمان شروع ↑</option>
+            <option value="-start_time">مرتب‌سازی بر اساس زمان شروع ↓</option>
+            <option value="title">مرتب‌سازی بر اساس عنوان ↑</option>
+            <option value="-title">مرتب‌سازی بر اساس عنوان ↓</option>
+            <option value="duration_minutes">مرتب‌سازی بر اساس مدت زمان ↑</option>
+            <option value="-duration_minutes">مرتب‌سازی بر اساس مدت زمان ↓</option>
+        </select>
+        <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
+    </div>
+</section>
+
+<section class="exam-list" id="exam-list">
+    <p>در حال بارگذاری آزمون‌ها...</p>
+</section>
+
+<script>
+    const token = localStorage.getItem('token');
+    const classroomId = window.location.pathname.split('/').filter(Boolean).pop();
+    const BASE_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/`;
+
+    // تنظیم لینک دکمه‌ها
+    document.getElementById("edit-class-btn").href = `/dashboard/institute/classes/${classroomId}/edit/`;
+    document.getElementById("add-exam-btn").href = `/dashboard/institute/classes/${classroomId}/exams/add/`;
+    document.getElementById("view-students-btn").href = `/dashboard/institute/classes/${classroomId}/students/`;
+
+    // تابع ساخت URL با پارامترهای فیلتر و مرتب‌سازی
+    function buildApiUrl() {
+        const params = new URLSearchParams();
+
+        const title = document.getElementById("title-filter").value.trim();
+        const description = document.getElementById("description-filter").value.trim();
+        const status = document.getElementById("status-filter").value;
+        const start_time = document.getElementById("start_time-filter").value;
+        const end_time = document.getElementById("end_time-filter").value;
+        const duration = document.getElementById("duration_minutes-filter").value.trim();
+        const category_name = document.getElementById("category_name-filter").value.trim();
+        const creator_first_name = document.getElementById("creator_first_name-filter").value.trim();
+        const creator_last_name = document.getElementById("creator_last_name-filter").value.trim();
+        const ordering = document.getElementById("ordering").value;
+
+        if(title) params.append('title', title);
+        if(description) params.append('description', description);
+        if(status) params.append('status', status);
+        if(start_time) params.append('start_time', new Date(start_time).toISOString());
+        if(end_time) params.append('end_time', new Date(end_time).toISOString());
+        if(duration) params.append('duration_minutes', duration);
+        if(category_name) params.append('category_name', category_name);
+        if(creator_first_name) params.append('creator_first_name', creator_first_name);
+        if(creator_last_name) params.append('creator_last_name', creator_last_name);
+        if(ordering) params.append('ordering', ordering);
+
+        return BASE_API_URL + '?' + params.toString();
+    }
+
+    async function loadExams() {
+        try {
+            const url = buildApiUrl();
+            const response = await fetch(url, {
+                headers: {
+                    "Authorization": `Token ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error("خطا در دریافت لیست آزمون‌ها");
+
+            const data = await response.json();
+            const container = document.getElementById("exam-list");
+            container.innerHTML = "";
+
+            if (data.length === 0) {
+                container.innerHTML = "<p>آزمونی برای این کلاس ثبت نشده است.</p>";
+                return;
+            }
+
+            data.forEach(exam => {
+                const div = document.createElement("div");
+                div.className = "exam-card";
+                div.innerHTML = `
+                    <h3>${exam.title}</h3>
+                    <p><strong>توضیحات:</strong> ${exam.description || "-"}</p>
+                    <p><strong>زمان شروع:</strong> ${new Date(exam.start_time).toLocaleString('fa-IR')}</p>
+                    <p><strong>زمان پایان:</strong> ${new Date(exam.end_time).toLocaleString('fa-IR')}</p>
+                    <p><strong>مدت زمان:</strong> ${exam.duration_minutes} دقیقه</p>
+                    <p><strong>وضعیت:</strong> ${exam.status ? "فعال" : "غیرفعال"}</p>
+                `;
+                container.appendChild(div);
+            });
+        } catch (error) {
+            document.getElementById("exam-list").innerHTML = `<p style="color:red;">${error.message}</p>`;
+        }
+    }
+
+    document.getElementById("filter-btn").addEventListener("click", e => {
+        e.preventDefault();
+        loadExams();
+    });
+
+    // بارگذاری اولیه
+    loadExams();
+</script>
+
+</body>
+</html>

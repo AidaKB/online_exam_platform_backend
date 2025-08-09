@@ -268,22 +268,25 @@ class ExamListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        classroom_id = self.kwargs.get('classroom_id')  # گرفتن classroom_id از URL
+
+        base_qs = models.Exam.objects.filter(classroom_id=classroom_id)
 
         if user.user_type == 'admin':
-            return models.Exam.objects.all()
+            return base_qs
 
         elif hasattr(user, 'institute'):
-            return models.Exam.objects.filter(
+            return base_qs.filter(
                 classroom__teacher__institute=user.institute
             )
 
         elif hasattr(user, 'teacher'):
-            return models.Exam.objects.filter(
+            return base_qs.filter(
                 classroom__teacher=user.teacher
             )
 
         elif hasattr(user, 'student'):
-            return models.Exam.objects.filter(
+            return base_qs.filter(
                 classroom__teacher__institute=user.student.institute
             ).distinct()
 
