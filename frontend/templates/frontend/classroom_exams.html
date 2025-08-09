@@ -8,9 +8,10 @@
 </head>
 <body>
 
-<header id="class-title" class="header">
-    جزئیات کلاس
-</header>
+  <header>
+    <h1>جزئیات کلاس</h1>
+        <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
+  </header>
 
 <div class="top-buttons">
     <a id="edit-class-btn" class="btn-primary">✏️ ویرایش کلاس</a>
@@ -27,8 +28,11 @@
             <option value="true">فعال</option>
             <option value="false">غیرفعال</option>
         </select>
-        <input type="datetime-local" id="start_time-filter" class="form-input" placeholder="زمان شروع" />
-        <input type="datetime-local" id="end_time-filter" class="form-input" placeholder="زمان پایان" />
+        <label for="start_time-filter">زمان شروع (از):</label>
+        <input type="datetime-local" id="start_time-filter" class="form-input" placeholder="زمان شروع (از)" />
+
+        <label for="end_time-filter">زمان پایان (تا):</label>
+        <input type="datetime-local" id="end_time-filter" class="form-input" placeholder="زمان پایان (تا)" />
         <input type="number" id="duration_minutes-filter" min="0" placeholder="مدت زمان (دقیقه)" class="form-input" />
         <input type="text" id="category_name-filter" placeholder="نام دسته‌بندی" class="form-input" />
         <input type="text" id="creator_first_name-filter" placeholder="نام سازنده" class="form-input" />
