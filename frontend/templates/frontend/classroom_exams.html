@@ -3,19 +3,23 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8" />
-    <title>جزئیات کلاس</title>
+    <title>اطلاعات کلاس</title>
     <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
 </head>
 <body>
 
   <header>
-    <h1>جزئیات کلاس</h1>
+    <h1>اطلاعات کلاس</h1>
         <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
   </header>
 
-<div class="top-buttons">
-    <a id="edit-class-btn" class="btn-primary">✏️ ویرایش کلاس</a>
-    <a id="add-exam-btn" class="btn-primary">➕ افزودن آزمون</a>
+    <div class="top-buttons">
+    <a id="edit-class-btn" class="btn-primary" href="#">✏️ ویرایش کلاس</a>
+    <a id="add-exam-btn"
+       class="btn-primary"
+       href="/dashboard/institute/classes/{{ class.id }}/exams/add/">
+        ➕ افزودن آزمون
+    </a>
     <a id="view-students-btn" class="btn-primary">👥 مشاهده دانش‌آموزان</a>
 </div>
 
@@ -58,12 +62,10 @@
     const classroomId = window.location.pathname.split('/').filter(Boolean).pop();
     const BASE_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/`;
 
-    // تنظیم لینک دکمه‌ها
     document.getElementById("edit-class-btn").href = `/dashboard/institute/classes/${classroomId}/edit/`;
     document.getElementById("add-exam-btn").href = `/dashboard/institute/classes/${classroomId}/exams/add/`;
     document.getElementById("view-students-btn").href = `/dashboard/institute/classes/${classroomId}/students/`;
 
-    // تابع ساخت URL با پارامترهای فیلتر و مرتب‌سازی
     function buildApiUrl() {
         const params = new URLSearchParams();
 
@@ -135,9 +137,7 @@
         loadExams();
     });
 
-    // بارگذاری اولیه
     loadExams();
 </script>
-
 </body>
 </html>

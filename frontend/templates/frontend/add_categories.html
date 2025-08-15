@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>افزودن دسته‌بندی آزمون</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header>
+    <h1>افزودن دسته‌بندی جدید</h1>
+    <button class="btn-back" onclick="window.close()">بستن</button>
+</header>
+
+<div class="form-container">
+    <form id="category-form" class="form-grid">
+        <label for="name">نام دسته‌بندی:</label>
+        <input type="text" id="name" placeholder="نام دسته‌بندی" required />
+
+        <button type="submit" class="btn-primary full-width">ثبت دسته‌بندی</button>
+    </form>
+    <div id="message"></div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const CATEGORY_API_URL = "http://localhost:8000/api/exam/exam-categories/";
+
+    document.getElementById("category-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("name").value.trim();
+        if (!name) {
+            alert("نام دسته‌بندی را وارد کنید");
+            return;
+        }
+
+        try {
+            const response = await fetch(CATEGORY_API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || "خطا در ثبت دسته‌بندی");
+            }
+
+            document.getElementById("message").textContent = "دسته‌بندی با موفقیت ثبت شد";
+            document.getElementById("message").style.color = "green";
+            document.getElementById("category-form").reset();
+
+        } catch (error) {
+            document.getElementById("message").textContent = error.message;
+            document.getElementById("message").style.color = "red";
+        }
+    });
+</script>
+
+</body>
+</html>

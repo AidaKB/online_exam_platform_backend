@@ -196,6 +196,10 @@ class ExamCategoryListCreateAPIView(generics.ListCreateAPIView):
             return models.ExamCategory.objects.filter(
                 Q(creator=user) | Q(creator__user_type='admin')
             )
+        elif hasattr(user, 'institute'):
+            return models.ExamCategory.objects.filter(
+                Q(creator=user) | Q(creator__user_type='admin')
+            )
 
         return models.ExamCategory.objects.none()
 

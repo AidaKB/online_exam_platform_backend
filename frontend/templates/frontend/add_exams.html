@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>افزودن آزمون</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header>
+    <h1>افزودن آزمون جدید</h1>
+    <button class="btn-back" onclick="window.history.back()">بازگشت</button>
+</header>
+
+<div class="form-container">
+    <h2>فرم افزودن آزمون</h2>
+    <form id="exam-form" class="form-grid">
+
+        <label for="title">عنوان آزمون:</label>
+        <input type="text" id="title" placeholder="عنوان آزمون" required />
+
+        <label for="description">توضیحات آزمون:</label>
+        <textarea id="description" placeholder="توضیحات آزمون" rows="3"></textarea>
+
+        <label for="start_time">زمان شروع:</label>
+        <input type="datetime-local" id="start_time" required />
+
+        <label for="end_time">زمان پایان:</label>
+        <input type="datetime-local" id="end_time" required />
+
+        <label for="duration_minutes">مدت زمان (دقیقه):</label>
+        <input type="number" id="duration_minutes" placeholder="مدت زمان" min="1" required />
+
+        <label for="result_show_time">زمان نمایش نتایج:</label>
+        <input type="datetime-local" id="result_show_time" />
+
+        <label for="status">وضعیت:</label>
+        <select id="status" required>
+            <option value="true" selected>فعال</option>
+            <option value="false">غیرفعال</option>
+        </select>
+
+        <label for="category">دسته‌بندی:</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="category" required>
+                <option value="">انتخاب دسته‌بندی...</option>
+            </select>
+            <button type="button" id="add-category-btn" class="btn-secondary">➕ افزودن</button>
+        </div>
+
+        <button type="submit" class="btn-primary full-width">ثبت آزمون</button>
+    </form>
+    <div id="message"></div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const examsIndex = pathParts.indexOf("exams");
+    const classroomId = pathParts[examsIndex - 1];
+    console.log("classroomId:", classroomId);
+
+    const CATEGORY_API_URL = "http://localhost:8000/api/exam/exam-categories/";
+    const EXAM_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/`;
+
+    // بارگذاری دسته‌بندی‌ها
+    async function loadCategories() {
+        try {
+            const response = await fetch(CATEGORY_API_URL, {
+                headers: { "Authorization": `Token ${token}` }
+            });
+            if (!response.ok) throw new Error("خطا در دریافت دسته‌بندی‌ها");
+            const categories = await response.json();
+            const select = document.getElementById("category");
+            select.innerHTML = '<option value="">انتخاب دسته‌بندی...</option>';
+
+            categories.forEach(cat => {
+                const option = document.createElement("option");
+                option.value = cat.id;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            document.getElementById("message").textContent = error.message;
+            document.getElementById("message").classList.add("error");
+        }
+    }
+
+    document.getElementById("add-category-btn").addEventListener("click", () => {
+        window.open("/dashboard/institute/categories/add/", "_blank");
+    });
+
+    document.getElementById("exam-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const data = {
+            title: document.getElementById("title").value.trim(),
+            description: document.getElementById("description").value.trim(),
+            start_time: new Date(document.getElementById("start_time").value).toISOString(),
+            end_time: new Date(document.getElementById("end_time").value).toISOString(),
+            duration_minutes: parseInt(document.getElementById("duration_minutes").value),
+            result_show_time: document.getElementById("result_show_time").value ? new Date(document.getElementById("result_show_time").value).toISOString() : null,
+            status: document.getElementById("status").value === "true",
+            category: parseInt(document.getElementById("category").value),
+        };
+
+        try {
+            const response = await fetch(EXAM_API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error("خطا در ثبت آزمون");
+
+            document.getElementById("message").textContent = "آزمون با موفقیت ثبت شد";
+            document.getElementById("message").classList.remove("error");
+            document.getElementById("message").style.color = "green";
+            document.getElementById("exam-form").reset();
+        } catch (error) {
+            document.getElementById("message").textContent = error.message;
+            document.getElementById("message").classList.add("error");
+        }
+    });
+
+    loadCategories();
+</script>
+
+</body>
+</html>

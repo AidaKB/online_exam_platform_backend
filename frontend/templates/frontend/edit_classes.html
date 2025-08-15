@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>ویرایش کلاس</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header>
+    <h1>ویرایش کلاس</h1>
+    <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
+</header>
+
+<div class="form-container">
+    <form id="edit-class-form" class="form-grid">
+        <label>نام کلاس:</label>
+        <input type="text" id="name" required>
+
+        <label>پایه تحصیلی:</label>
+        <input type="text" id="grade" required>
+
+        <label>توضیحات:</label>
+        <textarea id="description"></textarea>
+
+        <label>استاد:</label>
+        <select id="teacher_id" required>
+            <option value="">انتخاب کنید...</option>
+        </select>
+
+        <button type="submit" class="btn-primary">💾 ذخیره تغییرات</button>
+    </form>
+
+    <button id="delete-btn" class="btn-danger full-width" style="margin-top: 20px;">
+        🗑️ حذف کلاس
+    </button>
+
+    <p id="message"></p>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
+    const API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/`;
+
+    const nameInput = document.getElementById("name");
+    const gradeInput = document.getElementById("grade");
+    const descriptionInput = document.getElementById("description");
+    const teacherIdInput = document.getElementById("teacher_id");
+    const messageEl = document.getElementById("message");
+
+    // گرفتن لیست اساتید و پر کردن dropdown
+    async function loadTeachers() {
+        try {
+            const res = await fetch("http://localhost:8000/api/core/teachers/", {
+                headers: { "Authorization": `Token ${token}` }
+            });
+            if (!res.ok) throw new Error("خطا در دریافت لیست استادها");
+
+            const teachers = await res.json();
+            teachers.forEach(teacher => {
+                const option = document.createElement("option");
+                option.value = teacher.id;
+                option.textContent = `${teacher.account.first_name} ${teacher.account.last_name} - ${teacher.expertise}`;
+                teacherIdInput.appendChild(option);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // گرفتن اطلاعات کلاس و پر کردن فرم
+    async function loadClassroom() {
+        try {
+            const res = await fetch(API_URL, {
+                headers: { "Authorization": `Token ${token}` }
+            });
+            if (!res.ok) throw new Error("خطا در دریافت اطلاعات کلاس");
+            const data = await res.json();
+
+            nameInput.value = data.name || "";
+            gradeInput.value = data.grade || "";
+            descriptionInput.value = data.description || "";
+            teacherIdInput.value = data.teacher?.id || "";
+        } catch (err) {
+            messageEl.textContent = err.message;
+            messageEl.style.color = "red";
+        }
+    }
+
+    // ذخیره تغییرات
+    document.getElementById("edit-class-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+            const body = {
+                name: nameInput.value,
+                grade: gradeInput.value,
+                description: descriptionInput.value,
+                teacher_id: teacherIdInput.value ? parseInt(teacherIdInput.value) : null
+            };
+
+            const res = await fetch(API_URL, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(JSON.stringify(errData));
+            }
+
+            messageEl.textContent = "تغییرات با موفقیت ذخیره شد.";
+            messageEl.style.color = "green";
+        } catch (err) {
+            messageEl.textContent = err.message;
+            messageEl.style.color = "red";
+        }
+    });
+
+    // حذف کلاس
+    document.getElementById("delete-btn").addEventListener("click", async () => {
+        if (!confirm("آیا مطمئن هستید که می‌خواهید این کلاس را حذف کنید؟")) return;
+        try {
+            const res = await fetch(API_URL, {
+                method: "DELETE",
+                headers: { "Authorization": `Token ${token}` }
+            });
+            if (!res.ok) throw new Error("خطا در حذف کلاس");
+
+            alert("کلاس با موفقیت حذف شد.");
+            window.location.href = "/dashboard/institute/";
+        } catch (err) {
+            messageEl.textContent = err.message;
+            messageEl.style.color = "red";
+        }
+    });
+
+    loadTeachers().then(() => {
+        loadClassroom();
+    });
+</script>
+
+</body>
+</html>

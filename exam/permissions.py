@@ -29,7 +29,7 @@ class IsStudentOfClassOrTeacherOrInstitute(permissions.BasePermission):
 class IsAdminOrTeacher(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
-        return getattr(user, 'user_type', None) in ['admin', 'teacher']
+        return getattr(user, 'user_type', None) in ['admin', 'teacher', 'institute']
 
 
 class IsAdminOrTeacherOrInstituteOwner(permissions.BasePermission):

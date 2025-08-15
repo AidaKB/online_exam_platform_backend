@@ -37,7 +37,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
         elif hasattr(user, 'institute'):
             teacher = attrs.get('teacher')
             if teacher.institute_id != user.institute.id:
-                raise serializers.ValidationError({'teacher_id': 'استاد انتخاب‌شده متعلق به موسسه شما نیست.'})
+                raise serializers.ValidationError({'teacher_id': 'استاد انتخاب ‌شده متعلق به موسسه شما نیست.'})
         elif getattr(user, "user_type", None) == "admin":
             return attrs
         else:
@@ -115,7 +115,7 @@ class ExamCategorySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
 
-        if user.user_type not in ['admin', 'teacher']:
+        if user.user_type not in ['admin', 'teacher', 'institute']:
             raise serializers.ValidationError("فقط مدیر یا استاد مجاز به ساخت دسته‌بندی هستند.")
 
         validated_data['creator'] = user
@@ -144,7 +144,7 @@ class ExamSerializer(serializers.ModelSerializer):
         if start_time >= end_time:
             raise serializers.ValidationError("زمان شروع باید قبل از زمان پایان باشد.")
 
-        if start_time < end_time:
+        if result_show_time < end_time:
             raise serializers.ValidationError("زمان نمایش پاسخ نباید زودتر از زمان اتمام آزمون باشد.")
 
         total_duration = (end_time - start_time).total_seconds() / 60

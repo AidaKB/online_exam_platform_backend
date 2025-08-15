@@ -14,5 +14,21 @@ urlpatterns = [
     path('dashboard/institute/classes/', TemplateView.as_view(template_name="frontend/institute_classes.html")),
     path('dashboard/institute/classes/<int:cls_id>/',
          TemplateView.as_view(template_name='frontend/classroom_exams.html'), name='classroom_exams'),
+    path('dashboard/institute/classes/<int:class_id>/classes/add/',
+         TemplateView.as_view(template_name="frontend/add_classes.html")),
+    path('dashboard/institute/classes/<int:class_id>/exams/add/',
+         TemplateView.as_view(template_name="frontend/add_exams.html")),
+    path(
+        'dashboard/institute/categories/add/',
+        TemplateView.as_view(template_name="frontend/add_categories.html"),
+        name='add_category'
+    ),
+    path(
+        'dashboard/institute/classes/<int:class_id>/edit/',
+        TemplateView.as_view(template_name="frontend/edit_classes.html"),
+        name='edit_classroom'
+    ),
+
+
 
 ]
