@@ -10,7 +10,7 @@ from . import models
 from . import serializers
 from . import permissions
 from . import filters
-from .models import Major
+from .models import Major, StudentClassroom
 
 
 class ClassroomListCreateAPIView(generics.ListCreateAPIView):
@@ -105,6 +105,10 @@ class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         user = self.request.user
         classroom = serializer.validated_data['classroom']
+        student = serializer.validated_data['student']
+
+        if StudentClassroom.objects.filter(classroom=classroom, student=student).exists():
+            raise PermissionDenied("قبلا این دانش آموز را به کلاس اضافه کرده اید.")
 
         if getattr(user, 'user_type', None) == 'admin':
             serializer.save()

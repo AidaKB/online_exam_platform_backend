@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>افزودن دانش‌آموز به کلاس</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header>
+    <h1>افزودن دانش‌آموز به کلاس</h1>
+    <button class="btn-back" id="back-btn">🔙 برگشت</button>
+</header>
+
+<!-- بخش فیلتر با استایل قبلی -->
+<section class="filters">
+    <div class="filter-group">
+        <input type="text" id="search-input" placeholder="جستجو بر اساس نام، ایمیل، کدملی..." class="form-input" />
+        <input type="text" id="filter-national-code" placeholder="کد ملی" class="form-input" />
+        <input type="text" id="filter-phone" placeholder="شماره تماس" class="form-input" />
+        <select id="filter-gender" class="form-input">
+            <option value="">همه جنسیت‌ها</option>
+            <option value="male">پسر</option>
+            <option value="female">دختر</option>
+        </select>
+        <select id="ordering-filter" class="form-input">
+            <option value="">مرتب‌سازی</option>
+            <option value="-created_at">جدیدترین</option>
+            <option value="created_at">قدیمی‌ترین</option>
+            <option value="date_of_birth">تاریخ تولد ↑</option>
+            <option value="-date_of_birth">تاریخ تولد ↓</option>
+            <option value="account__first_name">نام ↑</option>
+            <option value="-account__first_name">نام ↓</option>
+        </select>
+        <button id="apply-filters" class="btn-primary">فیلتر</button>
+    </div>
+</section>
+
+<section class="student-list" id="student-list">
+    <p>در حال بارگذاری دانش‌آموزان...</p>
+</section>
+
+<!-- div مخصوص خطاها -->
+<div id="error-message" style="color:red; margin:10px 0;"></div>
+
+<script>
+const token = localStorage.getItem('token');
+const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-3, -2)[0];
+const STUDENT_LIST_API = "http://localhost:8000/api/core/students/";
+const ADD_STUDENT_API = "http://localhost:8000/api/exam/students-classrooms/";
+
+document.getElementById("back-btn").addEventListener("click", () => {
+    window.location.href = `/dashboard/institute/classes/${classroomId}/students/`;
+});
+
+async function loadAllStudents() {
+    const errorDiv = document.getElementById("error-message");
+    errorDiv.textContent = ""; // پاک کردن خطاهای قبلی
+    try {
+        const search = document.getElementById("search-input").value.trim();
+        const nationalCode = document.getElementById("filter-national-code").value.trim();
+        const phone = document.getElementById("filter-phone").value.trim();
+        const gender = document.getElementById("filter-gender").value;
+        const ordering = document.getElementById("ordering-filter").value;
+
+        const params = new URLSearchParams();
+        if (search) params.append("search", search);
+        if (nationalCode) params.append("national_code", nationalCode);
+        if (phone) params.append("phone_number", phone);
+        if (gender) params.append("gender", gender);
+        if (ordering) params.append("ordering", ordering);
+
+        const res = await fetch(`${STUDENT_LIST_API}?${params.toString()}`, {
+            headers: { "Authorization": `Token ${token}` }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || "خطا در دریافت لیست دانش‌آموزان");
+        }
+
+        const students = await res.json();
+        const container = document.getElementById("student-list");
+        container.innerHTML = "";
+
+        if (students.length === 0) {
+            container.innerHTML = "<p>دانش‌آموزی یافت نشد.</p>";
+            return;
+        }
+
+        students.forEach(student => {
+            const div = document.createElement("div");
+            div.className = "student-card";
+
+            div.innerHTML = `
+                <span class="student-name">
+                    ${student.account.first_name} ${student.account.last_name}
+                </span>
+                <button class="btn-primary">➕ افزودن</button>
+            `;
+
+            div.querySelector("button").addEventListener("click", async () => {
+                if (!confirm(`آیا ${student.account.first_name} را به کلاس اضافه می‌کنید؟`)) return;
+
+                try {
+                    const addRes = await fetch(ADD_STUDENT_API, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Token ${token}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            classroom_id: classroomId,
+                            student_id: student.id
+                        })
+                    });
+
+                    if (!addRes.ok) {
+                        const errData = await addRes.json();
+                        throw new Error(errData.detail || "خطا در افزودن دانش‌آموز به کلاس");
+                    }
+
+                    alert("✅ دانش‌آموز با موفقیت اضافه شد");
+                    loadAllStudents();
+                } catch (err) {
+                    errorDiv.textContent = err.message;
+                }
+            });
+
+            container.appendChild(div);
+        });
+
+    } catch (err) {
+        errorDiv.textContent = err.message;
+        document.getElementById("student-list").innerHTML = "";
+    }
+}
+
+document.getElementById("apply-filters").addEventListener("click", () => {
+    loadAllStudents();
+});
+
+loadAllStudents();
+</script>
+
+
+</body>
+</html>
