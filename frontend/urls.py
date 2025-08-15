@@ -28,7 +28,10 @@ urlpatterns = [
         TemplateView.as_view(template_name="frontend/edit_classes.html"),
         name='edit_classroom'
     ),
-
-
+    path(
+        'dashboard/institute/classes/<int:class_id>/students/',
+        TemplateView.as_view(template_name="frontend/student_classroom.html"),
+        name='student_classroom'
+    ),
 
 ]

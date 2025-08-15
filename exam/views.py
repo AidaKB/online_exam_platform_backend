@@ -83,7 +83,7 @@ class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
         'student__account__first_name',
         'student__account__last_name',
     ]
-    ordering = ['classroom__name']  # پیش‌فرض
+    ordering = ['classroom__name']
 
     def get_queryset(self):
         user = self.request.user
@@ -92,7 +92,7 @@ class StudentClassroomListCreateAPIView(generics.ListCreateAPIView):
             return models.StudentClassroom.objects.all()
 
         elif hasattr(user, 'institute'):
-            return models.StudentClassroom.objects.filter(classroom__institute=user.institute)
+            return models.StudentClassroom.objects.filter(classroom__teacher__institute=user.institute)
 
         elif hasattr(user, 'teacher'):
             return models.StudentClassroom.objects.filter(classroom__teacher=user.teacher)

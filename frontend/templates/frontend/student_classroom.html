@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>دانش‌آموزان کلاس</title>
+    <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+
+<header>
+    <h1>دانش‌آموزان کلاس</h1>
+    <button class="btn-back" id="back-btn">🔙 برگشت به صفحه کلاس</button>
+</header>
+
+<div class="top-buttons">
+    <button id="add-student-btn" class="btn-primary">➕ افزودن دانش‌آموز</button>
+</div>
+
+<section class="student-list" id="student-list">
+    <p>در حال بارگذاری دانش‌آموزان...</p>
+</section>
+
+<script>
+const token = localStorage.getItem('token');
+const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
+const API_URL = `http://localhost:8000/api/exam/students-classrooms/?classroom_id=${classroomId}`;
+
+document.getElementById("back-btn").addEventListener("click", () => {
+    window.location.href = `/dashboard/institute/classes/${classroomId}/`;
+});
+
+document.getElementById("add-student-btn").addEventListener("click", () => {
+    window.location.href = `/dashboard/institute/classes/${classroomId}/students/add/`;
+});
+
+async function loadStudents() {
+    try {
+        const res = await fetch(API_URL, {
+            headers: { "Authorization": `Token ${token}` }
+        });
+        if (!res.ok) throw new Error("خطا در دریافت لیست دانش‌آموزان");
+        const data = await res.json();
+        const container = document.getElementById("student-list");
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+            container.innerHTML = "<p>دانش‌آموزی برای این کلاس ثبت نشده است.</p>";
+            return;
+        }
+
+data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "student-card";
+
+    div.innerHTML = `
+        <span class="student-name">${item.student}</span>
+        <button class="btn-danger">🗑️ حذف</button>
+    `;
+
+    div.querySelector(".btn-danger").addEventListener("click", async () => {
+        if (!confirm(`آیا مطمئن هستید که می‌خواهید ${item.student} را حذف کنید؟`)) return;
+        try {
+            const delRes = await fetch(`http://localhost:8000/api/exam/students-classrooms/${item.id}/`, {
+                method: "DELETE",
+                headers: { "Authorization": `Token ${token}` }
+            });
+            if (!delRes.ok) throw new Error("خطا در حذف دانش‌آموز");
+            loadStudents();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+
+    container.appendChild(div);
+});
+
+    } catch (err) {
+        document.getElementById("student-list").innerHTML = `<p style="color:red;">${err.message}</p>`;
+    }
+}
+
+loadStudents();
+</script>
+
+</body>
+</html>
