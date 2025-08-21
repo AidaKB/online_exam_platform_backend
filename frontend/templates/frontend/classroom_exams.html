@@ -113,20 +113,25 @@
                 container.innerHTML = "<p>آزمونی برای این کلاس ثبت نشده است.</p>";
                 return;
             }
+        data.forEach(exam => {
+            const div = document.createElement("div");
+            div.className = "exam-card clickable-card";
+            div.innerHTML = `
+                <h3>${exam.title}</h3>
+                <p><strong>توضیحات:</strong> ${exam.description || "-"}</p>
+                <p><strong>زمان شروع:</strong> ${new Date(exam.start_time).toLocaleString('fa-IR')}</p>
+                <p><strong>زمان پایان:</strong> ${new Date(exam.end_time).toLocaleString('fa-IR')}</p>
+                <p><strong>مدت زمان:</strong> ${exam.duration_minutes} دقیقه</p>
+                <p><strong>وضعیت:</strong> ${exam.status ? "فعال" : "غیرفعال"}</p>
+            `;
 
-            data.forEach(exam => {
-                const div = document.createElement("div");
-                div.className = "exam-card";
-                div.innerHTML = `
-                    <h3>${exam.title}</h3>
-                    <p><strong>توضیحات:</strong> ${exam.description || "-"}</p>
-                    <p><strong>زمان شروع:</strong> ${new Date(exam.start_time).toLocaleString('fa-IR')}</p>
-                    <p><strong>زمان پایان:</strong> ${new Date(exam.end_time).toLocaleString('fa-IR')}</p>
-                    <p><strong>مدت زمان:</strong> ${exam.duration_minutes} دقیقه</p>
-                    <p><strong>وضعیت:</strong> ${exam.status ? "فعال" : "غیرفعال"}</p>
-                `;
-                container.appendChild(div);
+            div.addEventListener("click", () => {
+                window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${exam.id}/questions/`;
             });
+
+            container.appendChild(div);
+        });
+
         } catch (error) {
             document.getElementById("exam-list").innerHTML = `<p style="color:red;">${error.message}</p>`;
         }

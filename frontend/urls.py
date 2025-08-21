@@ -39,4 +39,15 @@ urlpatterns = [
         TemplateView.as_view(template_name="frontend/add_student_classroom.html"),
         name='add_student_classroom'
     ),
+    path(
+        'dashboard/institute/classes/<int:class_id>/exams/<int:exam_id>/questions/',
+        TemplateView.as_view(template_name="frontend/questions.html"),
+        name='exam_detail'
+    ),
+    path(
+        "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/add-question/",
+        TemplateView.as_view(template_name="frontend/add_question.html"),
+        name='exam_detail'
+    ),
+
 ]

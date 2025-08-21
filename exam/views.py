@@ -276,7 +276,7 @@ class ExamListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        classroom_id = self.kwargs.get('classroom_id')  # گرفتن classroom_id از URL
+        classroom_id = self.kwargs.get('classroom_id')
 
         base_qs = models.Exam.objects.filter(classroom_id=classroom_id)
 
@@ -344,23 +344,24 @@ class QuestionListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        exam_id = self.kwargs.get('exam_id')
 
         if user.user_type == 'admin':
-            return models.Question.objects.all()
+            return models.Question.objects.filter(exam_id=exam_id)
 
         if hasattr(user, 'institute'):
             return models.Question.objects.filter(
-                exam__classroom__teacher__institute=user.institute
+                exam__classroom__teacher__institute=user.institute, exam_id=exam_id
             )
 
         if hasattr(user, 'teacher'):
             return models.Question.objects.filter(
-                exam__classroom__teacher=user.teacher
+                exam__classroom__teacher=user.teacher, exam_id=exam_id
             )
 
         if hasattr(user, 'student'):
             return models.Question.objects.filter(
-                exam__classroom__teacher__institute=user.student.institute
+                exam__classroom__teacher__institute=user.student.institute, exam_id=exam_id
             ).distinct()
 
         return models.Question.objects.none()
