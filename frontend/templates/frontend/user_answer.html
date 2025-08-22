@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>تصحیح پاسخ‌ها</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+  <style>
+    .answers-container {
+      max-width: 900px;
+      margin: 1.5rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .answer-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      padding: 1.2rem 1.5rem;
+      border-top: 5px solid #f1c40f; /* زرد مثل exam-card */
+      transition: all 0.3s ease;
+      color: #2c3e50;
+    }
+
+    .answer-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      background-color: #f9f9f9;
+    }
+
+    .answer-card p {
+      margin: 0.4rem 0;
+      font-size: 1rem;
+      text-align: right;
+    }
+
+    .score-input {
+      margin-right: 0.5rem;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 80px;
+      font-family: 'IRANSans', Tahoma, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>تصحیح پاسخ‌های آزمون</h1>
+    <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
+  </header>
+
+  <section id="answers-section">
+    <h2>پاسخ‌های دانش‌آموزان</h2>
+    <div id="answers-container" class="answers-container">
+      <p>در حال بارگذاری پاسخ‌ها...</p>
+    </div>
+  </section>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const classroomId = pathParts[pathParts.indexOf("classes") + 1];
+    const examId = pathParts[pathParts.indexOf("exams") + 1];
+    const BASE_API_URL = `http://localhost:8000/api/exam/answers/?question__exam=${examId}`;
+
+    const container = document.getElementById("answers-container");
+
+    // تابع برای گرفتن اطلاعات دانش‌آموز
+    async function fetchStudent(studentId) {
+      const resp = await fetch(`http://localhost:8000/api/core/students/${studentId}/`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!resp.ok) return null;
+      return await resp.json();
+    }
+
+    // تابع برای گرفتن اطلاعات سوال (متن + نمره)
+    async function fetchQuestion(questionId) {
+      const resp = await fetch(`http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!resp.ok) return null;
+      return await resp.json();
+    }
+
+    async function loadAnswers() {
+      try {
+        const response = await fetch(BASE_API_URL, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!response.ok) throw new Error("خطا در دریافت پاسخ‌ها");
+
+        const data = await response.json();
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+          container.innerHTML = "<p>هیچ پاسخی ثبت نشده است.</p>";
+          return;
+        }
+
+        for (const ans of data) {
+          const student = await fetchStudent(ans.user);
+          const question = await fetchQuestion(ans.question);
+
+          const div = document.createElement("div");
+          div.className = "answer-card";
+          div.innerHTML = `
+            <p><strong>دانش‌آموز:</strong> ${student ? student.account.first_name + " " + student.account.last_name : "نامشخص"}</p>
+            <p><strong>سوال:</strong> ${question ? question.text : "نامشخص"}
+               ${question ? `(نمره کل: ${question.score})` : ""}</p>
+            <p><strong>پاسخ:</strong> ${ans.answer_text}</p>
+            <label>
+              نمره داده‌شده:
+              <input type="number" class="score-input" value="${ans.score}" min="0" step="0.25" data-id="${ans.id}">
+            </label>
+            <button class="btn-primary btn-save-score" data-id="${ans.id}">ثبت نمره</button>
+          `;
+          container.appendChild(div);
+        }
+
+        // دکمه‌های ثبت نمره
+        document.querySelectorAll(".btn-save-score").forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.dataset.id;
+            const input = document.querySelector(`.score-input[data-id="${id}"]`);
+            const newScore = parseFloat(input.value);
+
+            try {
+              const resp = await fetch(`http://localhost:8000/api/exam/answers/${id}/`, {
+                method: "PATCH",
+                headers: {
+                  "Authorization": `Token ${token}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ score: newScore })
+              });
+
+              if (!resp.ok) {
+                const errData = await resp.json();
+                throw new Error(errData.detail || "خطا در ثبت نمره");
+              }
+
+              alert("نمره با موفقیت ثبت شد ✅");
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        });
+
+      } catch (err) {
+        container.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    loadAnswers();
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرایش آزمون</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <header>
+    <h1>ویرایش آزمون</h1>
+    <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
+  </header>
+
+  <div class="exam-card">
+    <form id="exam-form" class="form-grid">
+      <label for="title">عنوان آزمون:</label>
+      <input type="text" id="title" class="form-control" required>
+
+      <label for="description">توضیحات:</label>
+      <textarea id="description" class="form-control" rows="3"></textarea>
+
+      <label for="start_time">زمان شروع:</label>
+      <input type="datetime-local" id="start_time" class="form-control" required>
+
+      <label for="end_time">زمان پایان:</label>
+      <input type="datetime-local" id="end_time" class="form-control" required>
+
+      <label for="duration_minutes">مدت زمان (دقیقه):</label>
+      <input type="number" id="duration_minutes" class="form-control" min="1" required>
+
+      <label for="result_show_time">زمان نمایش نتایج:</label>
+      <input type="datetime-local" id="result_show_time" class="form-control">
+
+      <label for="status">وضعیت:</label>
+      <select id="status" class="form-control">
+        <option value="true">فعال</option>
+        <option value="false">غیرفعال</option>
+      </select>
+
+      <button type="submit" class="btn-primary full-width">ذخیره تغییرات</button>
+    </form>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const classroomId = pathParts[pathParts.indexOf("classes") + 1];
+    const examId = pathParts[pathParts.indexOf("exams") + 1];
+    const API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/`;
+
+    // گرفتن اطلاعات آزمون
+    async function loadExam() {
+      try {
+        const resp = await fetch(API_URL, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!resp.ok) throw new Error("خطا در دریافت اطلاعات آزمون");
+        const exam = await resp.json();
+
+        document.getElementById("title").value = exam.title;
+        document.getElementById("description").value = exam.description || "";
+        document.getElementById("start_time").value = exam.start_time.slice(0,16);
+        document.getElementById("end_time").value = exam.end_time.slice(0,16);
+        document.getElementById("duration_minutes").value = exam.duration_minutes;
+        if (exam.result_show_time) {
+          document.getElementById("result_show_time").value = exam.result_show_time.slice(0,16);
+        }
+        document.getElementById("status").value = exam.status ? "true" : "false";
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // ذخیره تغییرات آزمون
+    document.getElementById("exam-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        title: document.getElementById("title").value,
+        description: document.getElementById("description").value,
+        start_time: document.getElementById("start_time").value,
+        end_time: document.getElementById("end_time").value,
+        duration_minutes: parseInt(document.getElementById("duration_minutes").value),
+        result_show_time: document.getElementById("result_show_time").value || null,
+        status: document.getElementById("status").value === "true"
+      };
+
+      try {
+        const resp = await fetch(API_URL, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Token ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error("خطا در ذخیره تغییرات");
+        alert("آزمون با موفقیت ویرایش شد");
+        window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/questions/`;
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    loadExam();
+  </script>
+</body>
+</html>
