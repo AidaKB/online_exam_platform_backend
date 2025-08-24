@@ -23,30 +23,14 @@
     const examId = pathParts[pathParts.indexOf("exams") + 1];
 
     const RESULTS_API = `http://localhost:8000/api/exam/user-exam-results/?exam=${examId}`;
-    const STUDENT_API = `http://localhost:8000/api/core/students/`; // اضافه کردن شناسه دانش‌آموز بعداً
-
     const container = document.getElementById("results-container");
 
-    function getScoreClass(score, maxScore) {
+    function getScoreColor(score, maxScore) {
         const percent = (score / maxScore) * 100;
-        if (percent >= 90) return "score-top";      // بالاترین
-        if (percent >= 70) return "score-high";     // بالا
-        if (percent >= 40) return "score-medium";   // متوسط
-        return "score-low";                          // پایین
-    }
-
-    async function fetchStudentName(studentId) {
-        try {
-            const resp = await fetch(`${STUDENT_API}${studentId}/`, {
-                headers: { "Authorization": `Token ${token}` }
-            });
-            if (!resp.ok) throw new Error("خطا در دریافت اطلاعات دانش‌آموز");
-            const data = await resp.json();
-            return `${data.account.first_name || ""} ${data.account.last_name || ""}`;
-        } catch (err) {
-            console.error(err);
-            return "دانش‌آموز نامشخص";
-        }
+        if (percent >= 75) return "score-color-1"; // آبی
+        if (percent >= 50) return "score-color-2"; // زرد
+        if (percent >= 25) return "score-color-3"; // خاکستری روشن
+        return "score-color-4";                   // خاکستری تیره
     }
 
     async function loadResults() {
@@ -54,33 +38,31 @@
             const resp = await fetch(RESULTS_API, { headers: { "Authorization": `Token ${token}` } });
             if (!resp.ok) throw new Error("خطا در دریافت نتایج");
 
-            const results = await resp.json();
+            const data = await resp.json();
             container.innerHTML = "";
 
-            if (!results.length) {
+            if (data.length === 0) {
                 container.innerHTML = "<p>هیچ نتیجه‌ای برای این آزمون ثبت نشده است.</p>";
                 return;
             }
 
-            // بالاترین نمره برای رنگ‌بندی
-            const maxScore = Math.max(...results.map(r => r.score));
+            const maxScore = Math.max(...data.map(r => r.score)) || 1;
 
-            for (const result of results) {
-                const studentName = await fetchStudentName(result.user); // گرفتن اسم و فامیل
+            for (const result of data) {
+                const studentName = `${result.user.account.first_name || ""} ${result.user.account.last_name || ""}`.trim() || "دانش‌آموز ناشناس";
 
                 const div = document.createElement("div");
                 div.className = "result-card clickable-card";
                 div.innerHTML = `
                     <span class="result-name">${studentName}</span>
-                    <span class="result-score ${getScoreClass(result.score, maxScore)}">${result.score}</span>
+                    <span class="result-score ${getScoreColor(result.score, maxScore)}">${result.score}</span>
                 `;
-
                 div.addEventListener("click", () => {
-                    window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/student-results/${result.user}/`;
+                    window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/student-results/${result.user.id}/`;
                 });
-
                 container.appendChild(div);
             }
+
         } catch (err) {
             container.innerHTML = `<p style="color:red;">${err.message}</p>`;
         }

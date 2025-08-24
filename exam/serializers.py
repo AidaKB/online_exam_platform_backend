@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from core.serializers import StudentSerializer
 from . import models
 from core import serializers as core_serializers
 from django.utils import timezone as dj_timezone
@@ -232,9 +233,30 @@ class OptionSerializer(serializers.ModelSerializer):
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Student.objects.all(),
+        source="user",
+        write_only=True,
+        required=False
+    )
+    question_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Question.objects.all(),
+        source="question",
+        write_only=True
+    )
+
+    user = serializers.SerializerMethodField(read_only=True)
+    question = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.UserAnswer
-        fields = ['id', 'user', 'question', 'answer_text', 'score']
+        fields = ['id', 'user', 'user_id', 'question', 'question_id', 'answer_text', 'score']
+
+    def get_user(self, obj):
+        return StudentSerializer(obj.user).data
+
+    def get_question(self, obj):
+        return QuestionSerializer(obj.question).data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -307,9 +329,44 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
 
 class UserOptionsSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Student.objects.all(),
+        source="user",
+        write_only=True,
+        required=False
+    )
+    question_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Question.objects.all(),
+        source="question",
+        write_only=True
+    )
+    answer_option_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Option.objects.all(),
+        source="answer_option",
+        write_only=True
+    )
+
+    user = serializers.SerializerMethodField(read_only=True)
+    question = serializers.SerializerMethodField(read_only=True)
+    answer_option = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.UserOptions
-        fields = ['id', 'user', 'question', 'answer_option']
+        fields = [
+            'id',
+            'user', 'user_id',
+            'question', 'question_id',
+            'answer_option', 'answer_option_id'
+        ]
+
+    def get_user(self, obj):
+        return StudentSerializer(obj.user).data
+
+    def get_question(self, obj):
+        return QuestionSerializer(obj.question).data
+
+    def get_answer_option(self, obj):
+        return OptionSerializer(obj.answer_option).data
 
     def validate(self, attrs):
         user = self.context['request'].user
@@ -366,9 +423,30 @@ class UserOptionsSerializer(serializers.ModelSerializer):
 
 
 class UserExamResultSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Student.objects.all(),
+        source="user",
+        write_only=True,
+        required=False
+    )
+    exam_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Exam.objects.all(),
+        source="exam",
+        write_only=True,
+        required=False
+    )
+    user = serializers.SerializerMethodField(read_only=True)
+    exam = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.UserExamResult
-        fields = ['id', 'user', 'exam', 'score']
+        fields = ['id', 'user', 'user_id', 'exam', 'exam_id', 'score']
+
+    def get_user(self, obj):
+        return StudentSerializer(obj.user).data
+
+    def get_exam(self, obj):
+        return ExamSerializer(obj.exam).data
 
 
 class FeedbackSerializer(serializers.ModelSerializer):

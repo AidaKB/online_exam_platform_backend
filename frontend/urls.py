@@ -55,8 +55,18 @@ urlpatterns = [
         name='exam_update'
     ),
     path(
-       "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/grade/",
-       TemplateView.as_view(template_name="frontend/user_answer.html"),
-       name='user_answer'
-  ),
+        "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/grade/",
+        TemplateView.as_view(template_name="frontend/user_answer.html"),
+        name='user_answer'
+    ),
+    path(
+        "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/results/",
+        TemplateView.as_view(template_name="frontend/student_results.html"),
+        name='student_result'
+    ),
+    path(
+        "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/student-results/<int:student_id>/",
+        TemplateView.as_view(template_name="frontend/one_student_result.html"),
+        name="one_student_result"
+    ),
 ]

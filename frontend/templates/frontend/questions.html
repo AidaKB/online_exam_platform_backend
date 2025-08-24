@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>سوالات آزمون</title>
-  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
 </head>
 <body>
   <header>
@@ -14,11 +14,34 @@
 
   <!-- دکمه‌های مدیریتی آزمون -->
   <div class="top-buttons">
-    <button class="btn-primary" id="add-question-btn">افزودن سوال</button>
-    <button class="btn-primary" id="edit-exam-btn">ویرایش آزمون</button>
-    <button class="btn-primary" id="grade-questions-btn">تصحیح سوالات</button>
-    <button class="btn-primary" id="exam-results-btn">نتایج آزمون</button>
+    <button class="btn-primary" id="add-question-btn">➕ افزودن سوال</button>
+    <button class="btn-primary" id="edit-exam-btn">✏️ ویرایش آزمون</button>
+    <button class="btn-primary" id="grade-questions-btn">📝 تصحیح سوالات</button>
+    <button class="btn-primary" id="exam-results-btn">📊 نتایج آزمون</button>
   </div>
+
+  <!-- فیلترها -->
+  <section class="filters">
+    <div class="filter-group">
+      <input type="text" id="text-filter" placeholder="جستجو در متن سوال" class="form-input" />
+      <select id="type-filter" class="form-input">
+        <option value="">همه انواع سوال</option>
+        <option value="MultipleChoice">چندگزینه‌ای</option>
+        <option value="TrueFalse">درست/نادرست</option>
+        <option value="Descriptive">تشریحی</option>
+      </select>
+      <input type="number" id="score-filter" min="0" placeholder="نمره" class="form-input" />
+      <select id="ordering" class="form-input">
+        <option value="text">مرتب‌سازی بر اساس متن ↑</option>
+        <option value="-text">مرتب‌سازی بر اساس متن ↓</option>
+        <option value="question_type">مرتب‌سازی بر اساس نوع ↑</option>
+        <option value="-question_type">مرتب‌سازی بر اساس نوع ↓</option>
+        <option value="score">مرتب‌سازی بر اساس نمره ↑</option>
+        <option value="-score">مرتب‌سازی بر اساس نمره ↓</option>
+      </select>
+      <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
+    </div>
+  </section>
 
   <!-- سوالات تستی -->
   <section id="multiple-choice-questions">
@@ -52,11 +75,25 @@
     const mcContainer = document.querySelector("#multiple-choice-questions .questions-container");
     const descContainer = document.querySelector("#descriptive-questions .questions-container");
 
+    function buildApiUrl() {
+      const params = new URLSearchParams();
+      const text = document.getElementById("text-filter").value.trim();
+      const type = document.getElementById("type-filter").value;
+      const score = document.getElementById("score-filter").value.trim();
+      const ordering = document.getElementById("ordering").value;
+
+      if (text) params.append("text", text);
+      if (type) params.append("question_type", type);
+      if (score) params.append("score", score);
+      if (ordering) params.append("ordering", ordering);
+
+      return BASE_API_URL + "?" + params.toString();
+    }
+
     async function loadQuestions() {
       try {
-        const response = await fetch(BASE_API_URL, {
-          headers: { "Authorization": `Token ${token}` }
-        });
+        const url = buildApiUrl();
+        const response = await fetch(url, { headers: { "Authorization": `Token ${token}` } });
         if (!response.ok) throw new Error("خطا در دریافت سوالات");
 
         const data = await response.json();
@@ -71,12 +108,12 @@
 
         for (const q of data) {
           const div = document.createElement("div");
-          div.className = "question-card";
+          div.className = "question-card clickable-card";
           div.innerHTML = `
             <h3>${q.text}</h3>
             <p><strong>نوع سوال:</strong> ${QUESTION_TYPE_LABELS[q.question_type]}</p>
             <p><strong>نمره:</strong> ${q.score}</p>
-            <button class="btn-danger btn-delete" data-id="${q.id}">حذف</button>
+            <button class="btn-danger btn-delete" data-id="${q.id}">🗑️ حذف</button>
           `;
 
           if (q.question_type === "MultipleChoice" || q.question_type === "TrueFalse") {
@@ -108,16 +145,14 @@
           btn.addEventListener("click", async (e) => {
             const questionId = e.target.dataset.id;
             if (!confirm("آیا مطمئن هستید می‌خواهید این سوال را حذف کنید؟")) return;
+
             try {
               const deleteResp = await fetch(
                 `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/`,
-                {
-                  method: "DELETE",
-                  headers: { "Authorization": `Token ${token}` }
-                }
+                { method: "DELETE", headers: { "Authorization": `Token ${token}` } }
               );
               if (!deleteResp.ok) throw new Error("حذف سوال موفقیت‌آمیز نبود");
-              loadQuestions(); // بارگذاری مجدد سوالات
+              loadQuestions();
             } catch (err) {
               alert(err.message);
             }
@@ -130,21 +165,24 @@
       }
     }
 
+    // اعمال فیلتر
+    document.getElementById("filter-btn").addEventListener("click", e => {
+      e.preventDefault();
+      loadQuestions();
+    });
+
     loadQuestions();
 
     // دکمه‌های مدیریتی
     document.getElementById("add-question-btn").addEventListener("click", () => {
       window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/add-question/`;
     });
-
     document.getElementById("edit-exam-btn").addEventListener("click", () => {
       window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/edit/`;
     });
-
     document.getElementById("grade-questions-btn").addEventListener("click", () => {
       window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/grade/`;
     });
-
     document.getElementById("exam-results-btn").addEventListener("click", () => {
       window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/results/`;
     });

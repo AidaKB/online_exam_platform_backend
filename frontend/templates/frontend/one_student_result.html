@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>پاسخ‌های دانش‌آموز</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+</head>
+<body>
+  <header>
+    <h1>پاسخ‌های دانش‌آموز</h1>
+    <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
+  </header>
+
+  <section>
+    <h2>پاسخ‌های تشریحی</h2>
+    <div id="descriptive-answers">
+      <p>در حال بارگذاری...</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>پاسخ‌های تستی</h2>
+    <div id="mc-answers">
+      <p>در حال بارگذاری...</p>
+    </div>
+  </section>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const classroomId = pathParts[pathParts.indexOf("classes") + 1];
+    const examId = pathParts[pathParts.indexOf("exams") + 1];
+    const studentId = pathParts[pathParts.indexOf("student-results") + 1];
+
+    const descContainer = document.getElementById("descriptive-answers");
+    const mcContainer = document.getElementById("mc-answers");
+
+    async function loadDescriptiveAnswers() {
+      try {
+        const resp = await fetch(
+          `http://localhost:8000/api/exam/answers/?user=${studentId}&question__exam=${examId}`,
+          { headers: { "Authorization": `Token ${token}` } }
+        );
+        if (!resp.ok) throw new Error("خطا در دریافت پاسخ‌های تشریحی");
+
+        const data = await resp.json();
+        descContainer.innerHTML = "";
+
+        if (data.length === 0) {
+          descContainer.innerHTML = "<p>هیچ پاسخ تشریحی ثبت نشده است.</p>";
+          return;
+        }
+
+        data.forEach(ans => {
+          const div = document.createElement("div");
+          div.className = "answer-card";
+          div.innerHTML = `
+            <p><strong>سوال:</strong> ${ans.question.text}</p>
+            <p><strong>پاسخ:</strong> ${ans.answer_text}</p>
+            <p><strong>نمره:</strong> ${ans.score} / ${ans.question.score}</p>
+          `;
+          descContainer.appendChild(div);
+        });
+      } catch (err) {
+        descContainer.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    async function loadMCAnswers() {
+      try {
+        const resp = await fetch(
+          `http://localhost:8000/api/exam/options-answers/?user=${studentId}&question__exam=${examId}`,
+          { headers: { "Authorization": `Token ${token}` } }
+        );
+        if (!resp.ok) throw new Error("خطا در دریافت پاسخ‌های تستی");
+
+        const data = await resp.json();
+        mcContainer.innerHTML = "";
+
+        if (data.length === 0) {
+          mcContainer.innerHTML = "<p>هیچ پاسخ تستی ثبت نشده است.</p>";
+          return;
+        }
+
+        data.forEach(ans => {
+          const div = document.createElement("div");
+          div.className = "answer-card";
+          div.innerHTML = `
+            <p><strong>سوال:</strong> ${ans.question.text}</p>
+            <p><strong>گزینه انتخابی:</strong> ${ans.answer_option.text} ${ans.answer_option.is_correct ? "✅" : "❌"}</p>
+            <p><strong>نمره سوال:</strong> ${ans.question.score}</p>
+          `;
+          mcContainer.appendChild(div);
+        });
+      } catch (err) {
+        mcContainer.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    loadDescriptiveAnswers();
+    loadMCAnswers();
+  </script>
+</body>
+</html>
