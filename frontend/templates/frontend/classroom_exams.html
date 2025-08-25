@@ -3,116 +3,130 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8" />
-    <title>اطلاعات کلاس</title>
+    <title id="page-title">اطلاعات کلاس</title>
     <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
 </head>
 <body>
 
   <header>
-    <h1>اطلاعات کلاس</h1>
-        <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
+    <h1 id="page-header">اطلاعات کلاس</h1>
+    <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
   </header>
 
-    <div class="top-buttons">
+  <div class="top-buttons">
     <a id="edit-class-btn" class="btn-primary" href="#">✏️ ویرایش کلاس</a>
-    <a id="add-exam-btn"
-       class="btn-primary"
-       href="/dashboard/institute/classes/{{ class.id }}/exams/add/">
+    <a id="add-exam-btn" class="btn-primary" href="#">
         ➕ افزودن آزمون
     </a>
-    <a id="view-students-btn" class="btn-primary">👥 مشاهده دانش‌آموزان</a>
-</div>
+    <a id="view-students-btn" class="btn-primary" href="#">👥 مشاهده دانش‌آموزان</a>
+  </div>
 
-<section class="filters">
-    <div class="filter-group">
-        <input type="text" id="title-filter" placeholder="جستجو در عنوان" class="form-input" />
-        <input type="text" id="description-filter" placeholder="جستجو در توضیحات" class="form-input" />
-        <select id="status-filter" class="form-input">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="true">فعال</option>
-            <option value="false">غیرفعال</option>
-        </select>
-        <label for="start_time-filter">زمان شروع (از):</label>
-        <input type="datetime-local" id="start_time-filter" class="form-input" placeholder="زمان شروع (از)" />
+  <section class="filters">
+      <!-- فیلترها اینجا هستند -->
+      <div class="filter-group">
+          <input type="text" id="title-filter" placeholder="جستجو در عنوان" class="form-input" />
+          <input type="text" id="description-filter" placeholder="جستجو در توضیحات" class="form-input" />
+          <select id="status-filter" class="form-input">
+              <option value="">همه وضعیت‌ها</option>
+              <option value="true">فعال</option>
+              <option value="false">غیرفعال</option>
+          </select>
+          <label for="start_time-filter">زمان شروع (از):</label>
+          <input type="datetime-local" id="start_time-filter" class="form-input" />
+          <label for="end_time-filter">زمان پایان (تا):</label>
+          <input type="datetime-local" id="end_time-filter" class="form-input" />
+          <input type="number" id="duration_minutes-filter" min="0" placeholder="مدت زمان (دقیقه)" class="form-input" />
+          <input type="text" id="category_name-filter" placeholder="نام دسته‌بندی" class="form-input" />
+          <input type="text" id="creator_first_name-filter" placeholder="نام سازنده" class="form-input" />
+          <input type="text" id="creator_last_name-filter" placeholder="نام خانوادگی سازنده" class="form-input" />
+          <select id="ordering" class="form-input">
+              <option value="start_time">مرتب‌سازی بر اساس زمان شروع ↑</option>
+              <option value="-start_time">مرتب‌سازی بر اساس زمان شروع ↓</option>
+              <option value="title">مرتب‌سازی بر اساس عنوان ↑</option>
+              <option value="-title">مرتب‌سازی بر اساس عنوان ↓</option>
+              <option value="duration_minutes">مرتب‌سازی بر اساس مدت زمان ↑</option>
+              <option value="-duration_minutes">مرتب‌سازی بر اساس مدت زمان ↓</option>
+          </select>
+          <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
+      </div>
+  </section>
 
-        <label for="end_time-filter">زمان پایان (تا):</label>
-        <input type="datetime-local" id="end_time-filter" class="form-input" placeholder="زمان پایان (تا)" />
-        <input type="number" id="duration_minutes-filter" min="0" placeholder="مدت زمان (دقیقه)" class="form-input" />
-        <input type="text" id="category_name-filter" placeholder="نام دسته‌بندی" class="form-input" />
-        <input type="text" id="creator_first_name-filter" placeholder="نام سازنده" class="form-input" />
-        <input type="text" id="creator_last_name-filter" placeholder="نام خانوادگی سازنده" class="form-input" />
-        <select id="ordering" class="form-input">
-            <option value="start_time">مرتب‌سازی بر اساس زمان شروع ↑</option>
-            <option value="-start_time">مرتب‌سازی بر اساس زمان شروع ↓</option>
-            <option value="title">مرتب‌سازی بر اساس عنوان ↑</option>
-            <option value="-title">مرتب‌سازی بر اساس عنوان ↓</option>
-            <option value="duration_minutes">مرتب‌سازی بر اساس مدت زمان ↑</option>
-            <option value="-duration_minutes">مرتب‌سازی بر اساس مدت زمان ↓</option>
-        </select>
-        <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
-    </div>
-</section>
-
-<section class="exam-list" id="exam-list">
-    <p>در حال بارگذاری آزمون‌ها...</p>
-</section>
+  <section class="exam-list" id="exam-list">
+      <p>در حال بارگذاری آزمون‌ها...</p>
+  </section>
 
 <script>
-    const token = localStorage.getItem('token');
-    const classroomId = window.location.pathname.split('/').filter(Boolean).pop();
-    const BASE_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/`;
+const token = localStorage.getItem('token');
+const classroomId = window.location.pathname.split('/').filter(Boolean).pop();
+const CLASS_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/`;
+const EXAM_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/`;
 
-    document.getElementById("edit-class-btn").href = `/dashboard/institute/classes/${classroomId}/edit/`;
-    document.getElementById("add-exam-btn").href = `/dashboard/institute/classes/${classroomId}/exams/add/`;
-    document.getElementById("view-students-btn").href = `/dashboard/institute/classes/${classroomId}/students/`;
-
-    function buildApiUrl() {
-        const params = new URLSearchParams();
-
-        const title = document.getElementById("title-filter").value.trim();
-        const description = document.getElementById("description-filter").value.trim();
-        const status = document.getElementById("status-filter").value;
-        const start_time = document.getElementById("start_time-filter").value;
-        const end_time = document.getElementById("end_time-filter").value;
-        const duration = document.getElementById("duration_minutes-filter").value.trim();
-        const category_name = document.getElementById("category_name-filter").value.trim();
-        const creator_first_name = document.getElementById("creator_first_name-filter").value.trim();
-        const creator_last_name = document.getElementById("creator_last_name-filter").value.trim();
-        const ordering = document.getElementById("ordering").value;
-
-        if(title) params.append('title', title);
-        if(description) params.append('description', description);
-        if(status) params.append('status', status);
-        if(start_time) params.append('start_time', new Date(start_time).toISOString());
-        if(end_time) params.append('end_time', new Date(end_time).toISOString());
-        if(duration) params.append('duration_minutes', duration);
-        if(category_name) params.append('category_name', category_name);
-        if(creator_first_name) params.append('creator_first_name', creator_first_name);
-        if(creator_last_name) params.append('creator_last_name', creator_last_name);
-        if(ordering) params.append('ordering', ordering);
-
-        return BASE_API_URL + '?' + params.toString();
+// بارگذاری اسم کلاس و نمایش در title و h1
+async function loadClassroomName() {
+    try {
+        const res = await fetch(CLASS_API_URL, {
+            headers: { "Authorization": `Token ${token}` }
+        });
+        if (!res.ok) throw new Error("خطا در دریافت اطلاعات کلاس");
+        const data = await res.json();
+        const className = data.name || "کلاس بدون نام";
+        document.getElementById("page-title").textContent = className;
+        document.getElementById("page-header").textContent = className;
+    } catch (err) {
+        console.error(err);
     }
+}
 
-    async function loadExams() {
-        try {
-            const url = buildApiUrl();
-            const response = await fetch(url, {
-                headers: {
-                    "Authorization": `Token ${token}`
-                }
-            });
+// لینک‌ها را بروزرسانی می‌کنیم
+document.getElementById("edit-class-btn").href = `/dashboard/institute/classes/${classroomId}/edit/`;
+document.getElementById("add-exam-btn").href = `/dashboard/institute/classes/${classroomId}/exams/add/`;
+document.getElementById("view-students-btn").href = `/dashboard/institute/classes/${classroomId}/students/`;
 
-            if (!response.ok) throw new Error("خطا در دریافت لیست آزمون‌ها");
+// ساخت URL API با فیلترها
+function buildApiUrl() {
+    const params = new URLSearchParams();
+    const title = document.getElementById("title-filter").value.trim();
+    const description = document.getElementById("description-filter").value.trim();
+    const status = document.getElementById("status-filter").value;
+    const start_time = document.getElementById("start_time-filter").value;
+    const end_time = document.getElementById("end_time-filter").value;
+    const duration = document.getElementById("duration_minutes-filter").value.trim();
+    const category_name = document.getElementById("category_name-filter").value.trim();
+    const creator_first_name = document.getElementById("creator_first_name-filter").value.trim();
+    const creator_last_name = document.getElementById("creator_last_name-filter").value.trim();
+    const ordering = document.getElementById("ordering").value;
 
-            const data = await response.json();
-            const container = document.getElementById("exam-list");
-            container.innerHTML = "";
+    if(title) params.append('title', title);
+    if(description) params.append('description', description);
+    if(status) params.append('status', status);
+    if(start_time) params.append('start_time', new Date(start_time).toISOString());
+    if(end_time) params.append('end_time', new Date(end_time).toISOString());
+    if(duration) params.append('duration_minutes', duration);
+    if(category_name) params.append('category_name', category_name);
+    if(creator_first_name) params.append('creator_first_name', creator_first_name);
+    if(creator_last_name) params.append('creator_last_name', creator_last_name);
+    if(ordering) params.append('ordering', ordering);
 
-            if (data.length === 0) {
-                container.innerHTML = "<p>آزمونی برای این کلاس ثبت نشده است.</p>";
-                return;
-            }
+    return EXAM_API_URL + '?' + params.toString();
+}
+
+// بارگذاری آزمون‌ها
+async function loadExams() {
+    try {
+        const url = buildApiUrl();
+        const res = await fetch(url, {
+            headers: { "Authorization": `Token ${token}` }
+        });
+        if (!res.ok) throw new Error("خطا در دریافت لیست آزمون‌ها");
+        const data = await res.json();
+        const container = document.getElementById("exam-list");
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+            container.innerHTML = "<p>آزمونی برای این کلاس ثبت نشده است.</p>";
+            return;
+        }
+
         data.forEach(exam => {
             const div = document.createElement("div");
             div.className = "exam-card clickable-card";
@@ -124,25 +138,26 @@
                 <p><strong>مدت زمان:</strong> ${exam.duration_minutes} دقیقه</p>
                 <p><strong>وضعیت:</strong> ${exam.status ? "فعال" : "غیرفعال"}</p>
             `;
-
             div.addEventListener("click", () => {
                 window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${exam.id}/questions/`;
             });
-
             container.appendChild(div);
         });
 
-        } catch (error) {
-            document.getElementById("exam-list").innerHTML = `<p style="color:red;">${error.message}</p>`;
-        }
+    } catch (err) {
+        document.getElementById("exam-list").innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
+}
 
-    document.getElementById("filter-btn").addEventListener("click", e => {
-        e.preventDefault();
-        loadExams();
-    });
-
+document.getElementById("filter-btn").addEventListener("click", e => {
+    e.preventDefault();
     loadExams();
+});
+
+// اجرای اولیه
+loadClassroomName();
+loadExams();
 </script>
+
 </body>
 </html>

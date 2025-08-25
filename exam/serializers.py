@@ -214,10 +214,11 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class OptionSerializer(serializers.ModelSerializer):
     question = serializers.PrimaryKeyRelatedField(read_only=True)
+    question_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = models.Option
-        fields = ['id', 'question', 'text', 'is_correct']
+        fields = ['id', 'question', 'question_id', 'text', 'is_correct']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

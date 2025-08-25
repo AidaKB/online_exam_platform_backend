@@ -65,8 +65,8 @@ urlpatterns = [
         name='student_result'
     ),
     path(
-        "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/student-results/<int:student_id>/",
-        TemplateView.as_view(template_name="frontend/one_student_result.html"),
-        name="one_student_result"
-    ),
+       "dashboard/institute/classes/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/edit/",
+       TemplateView.as_view(template_name="frontend/edit_questions.html"),
+       name='edit_question'
+  ),
 ]

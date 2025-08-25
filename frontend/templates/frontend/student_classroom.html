@@ -17,6 +17,26 @@
     <button id="add-student-btn" class="btn-primary">➕ افزودن دانش‌آموز</button>
 </div>
 
+<!-- فیلترها -->
+<section class="filters">
+    <div class="filter-group">
+        <input type="text" id="student_name-filter" placeholder="نام دانش‌آموز" class="form-input" />
+        <input type="text" id="student_last_name-filter" placeholder="نام خانوادگی دانش‌آموز" class="form-input" />
+
+        <select id="ordering" class="form-input">
+            <option value="classroom__name">مرتب‌سازی بر اساس نام کلاس ↑</option>
+            <option value="-classroom__name">مرتب‌سازی بر اساس نام کلاس ↓</option>
+            <option value="student__account__first_name">مرتب‌سازی بر اساس نام دانش‌آموز ↑</option>
+            <option value="-student__account__first_name">مرتب‌سازی بر اساس نام دانش‌آموز ↓</option>
+            <option value="student__account__last_name">مرتب‌سازی بر اساس نام خانوادگی دانش‌آموز ↑</option>
+            <option value="-student__account__last_name">مرتب‌سازی بر اساس نام خانوادگی دانش‌آموز ↓</option>
+        </select>
+
+        <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
+    </div>
+</section>
+
+<!-- لیست دانش‌آموزان -->
 <section class="student-list" id="student-list">
     <p>در حال بارگذاری دانش‌آموزان...</p>
 </section>
@@ -24,7 +44,7 @@
 <script>
 const token = localStorage.getItem('token');
 const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
-const API_URL = `http://localhost:8000/api/exam/students-classrooms/?classroom=${classroomId}`;
+const BASE_URL = `http://localhost:8000/api/exam/students-classrooms/`;
 
 document.getElementById("back-btn").addEventListener("click", () => {
     window.location.href = `/dashboard/institute/classes/${classroomId}/`;
@@ -34,9 +54,27 @@ document.getElementById("add-student-btn").addEventListener("click", () => {
     window.location.href = `/dashboard/institute/classes/${classroomId}/students/add/`;
 });
 
+// ساخت URL API با فیلترها
+function buildApiUrl() {
+    const params = new URLSearchParams();
+    params.append("classroom", classroomId);
+
+    const student_name = document.getElementById("student_name-filter").value.trim();
+    const student_last_name = document.getElementById("student_last_name-filter").value.trim();
+    const ordering = document.getElementById("ordering").value;
+
+    if (student_name) params.append("student_name", student_name);
+    if (student_last_name) params.append("student_last_name", student_last_name);
+    if (ordering) params.append("ordering", ordering);
+
+    return BASE_URL + '?' + params.toString();
+}
+
+// بارگذاری دانش‌آموزان
 async function loadStudents() {
     try {
-        const res = await fetch(API_URL, {
+        const url = buildApiUrl();
+        const res = await fetch(url, {
             headers: { "Authorization": `Token ${token}` }
         });
         if (!res.ok) throw new Error("خطا در دریافت لیست دانش‌آموزان");
@@ -49,37 +87,43 @@ async function loadStudents() {
             return;
         }
 
-data.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "student-card";
+        data.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "student-card";
 
-    div.innerHTML = `
-        <span class="student-name">${item.student}</span>
-        <button class="btn-danger">🗑️ حذف</button>
-    `;
+            div.innerHTML = `
+                <span class="student-name">${item.student}</span>
+                <button class="btn-danger">🗑️ حذف</button>
+            `;
 
-    div.querySelector(".btn-danger").addEventListener("click", async () => {
-        if (!confirm(`آیا مطمئن هستید که می‌خواهید ${item.student} را حذف کنید؟`)) return;
-        try {
-            const delRes = await fetch(`http://localhost:8000/api/exam/students-classrooms/${item.id}/`, {
-                method: "DELETE",
-                headers: { "Authorization": `Token ${token}` }
+            div.querySelector(".btn-danger").addEventListener("click", async () => {
+                if (!confirm(`آیا مطمئن هستید که می‌خواهید ${item.student} را حذف کنید؟`)) return;
+                try {
+                    const delRes = await fetch(`http://localhost:8000/api/exam/students-classrooms/${item.id}/`, {
+                        method: "DELETE",
+                        headers: { "Authorization": `Token ${token}` }
+                    });
+                    if (!delRes.ok) throw new Error("خطا در حذف دانش‌آموز");
+                    loadStudents();
+                } catch (err) {
+                    alert(err.message);
+                }
             });
-            if (!delRes.ok) throw new Error("خطا در حذف دانش‌آموز");
-            loadStudents();
-        } catch (err) {
-            alert(err.message);
-        }
-    });
 
-    container.appendChild(div);
-});
+            container.appendChild(div);
+        });
 
     } catch (err) {
         document.getElementById("student-list").innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
 }
 
+document.getElementById("filter-btn").addEventListener("click", e => {
+    e.preventDefault();
+    loadStudents();
+});
+
+// اجرای اولیه
 loadStudents();
 </script>
 

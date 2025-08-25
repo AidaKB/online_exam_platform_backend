@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <h1>لیست سوالات آزمون</h1>
+    <h1 id="exam-title">لیست سوالات آزمون</h1>
     <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
   </header>
 
@@ -65,6 +65,7 @@
     const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
     const BASE_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/`;
+    const EXAM_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/`;
 
     const QUESTION_TYPE_LABELS = {
       "MultipleChoice": "چندگزینه‌ای",
@@ -75,6 +76,20 @@
     const mcContainer = document.querySelector("#multiple-choice-questions .questions-container");
     const descContainer = document.querySelector("#descriptive-questions .questions-container");
 
+    // گرفتن اسم آزمون
+    async function loadExamTitle() {
+      try {
+        const resp = await fetch(EXAM_API_URL, { headers: { "Authorization": `Token ${token}` } });
+        if (!resp.ok) throw new Error("خطا در دریافت اطلاعات آزمون");
+        const exam = await resp.json();
+        document.getElementById("exam-title").textContent = `لیست سوالات ${exam.title}`;
+        document.title = `سوالات آزمون - ${exam.title}`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // ساخت URL برای فیلترها
     function buildApiUrl() {
       const params = new URLSearchParams();
       const text = document.getElementById("text-filter").value.trim();
@@ -90,6 +105,7 @@
       return BASE_API_URL + "?" + params.toString();
     }
 
+    // بارگذاری سوالات
     async function loadQuestions() {
       try {
         const url = buildApiUrl();
@@ -116,6 +132,13 @@
             <button class="btn-danger btn-delete" data-id="${q.id}">🗑️ حذف</button>
           `;
 
+          // ✅ لینک به صفحه ویرایش با کلیک روی کارت
+          div.addEventListener("click", (e) => {
+            if (e.target.classList.contains("btn-delete")) return; // روی حذف نره
+            window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/questions/${q.id}/edit/`;
+          });
+
+          // سوالات تستی (نمایش گزینه‌ها)
           if (q.question_type === "MultipleChoice" || q.question_type === "TrueFalse") {
             const optionsResponse = await fetch(
               `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${q.id}/options/`,
@@ -133,6 +156,7 @@
             div.appendChild(ul);
           }
 
+          // افزودن به بخش مناسب
           if (q.question_type === "Descriptive") {
             descContainer.appendChild(div);
           } else {
@@ -143,6 +167,7 @@
         // دکمه‌های حذف
         document.querySelectorAll(".btn-delete").forEach(btn => {
           btn.addEventListener("click", async (e) => {
+            e.stopPropagation(); // تا کلیک روی کارت نره
             const questionId = e.target.dataset.id;
             if (!confirm("آیا مطمئن هستید می‌خواهید این سوال را حذف کنید؟")) return;
 
@@ -171,6 +196,8 @@
       loadQuestions();
     });
 
+    // بارگذاری
+    loadExamTitle();
     loadQuestions();
 
     // دکمه‌های مدیریتی

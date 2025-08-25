@@ -12,6 +12,26 @@
     <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
   </header>
 
+  <!-- فیلترها -->
+  <section class="filters">
+    <div class="filter-group">
+      <input type="text" id="student-name-filter" placeholder="نام دانش‌آموز" class="form-input" />
+      <input type="text" id="student-lastname-filter" placeholder="نام خانوادگی دانش‌آموز" class="form-input" />
+      <input type="text" id="username-filter" placeholder="نام کاربری" class="form-input" />
+
+      <select id="ordering" class="form-input">
+        <option value="score">مرتب‌سازی بر اساس نمره ↑</option>
+        <option value="-score">مرتب‌سازی بر اساس نمره ↓</option>
+        <option value="exam__result_show_time">زمان نمایش نتیجه ↑</option>
+        <option value="-exam__result_show_time">زمان نمایش نتیجه ↓</option>
+        <option value="exam__title">عنوان آزمون ↑</option>
+        <option value="-exam__title">عنوان آزمون ↓</option>
+      </select>
+
+      <button id="filter-btn" class="btn-primary">اعمال فیلتر</button>
+    </div>
+  </section>
+
   <div class="results-container" id="results-container">
     <p>در حال بارگذاری نتایج...</p>
   </div>
@@ -22,7 +42,7 @@
     const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
 
-    const RESULTS_API = `http://localhost:8000/api/exam/user-exam-results/?exam=${examId}`;
+    const BASE_URL = `http://localhost:8000/api/exam/user-exam-results/`;
     const container = document.getElementById("results-container");
 
     function getScoreColor(score, maxScore) {
@@ -33,9 +53,35 @@
         return "score-color-4";                   // خاکستری تیره
     }
 
+    function buildApiUrl() {
+        const params = new URLSearchParams();
+        params.append("exam", examId);
+
+        const studentFirst = document.getElementById("student-name-filter").value.trim();
+        const studentLast = document.getElementById("student-lastname-filter").value.trim();
+        const username = document.getElementById("username-filter").value.trim();
+        const ordering = document.getElementById("ordering").value;
+
+        // چون ویو SearchFilter داره، ما باید سرچ کلی بزنیم
+        let searchTerms = [];
+        if (studentFirst) searchTerms.push(studentFirst);
+        if (studentLast) searchTerms.push(studentLast);
+        if (username) searchTerms.push(username);
+
+        if (searchTerms.length > 0) {
+          params.append("search", searchTerms.join(" "));
+        }
+
+        if (ordering) params.append("ordering", ordering);
+
+        return BASE_URL + "?" + params.toString();
+    }
+
+
     async function loadResults() {
         try {
-            const resp = await fetch(RESULTS_API, { headers: { "Authorization": `Token ${token}` } });
+            const url = buildApiUrl();
+            const resp = await fetch(url, { headers: { "Authorization": `Token ${token}` } });
             if (!resp.ok) throw new Error("خطا در دریافت نتایج");
 
             const data = await resp.json();
@@ -67,6 +113,11 @@
             container.innerHTML = `<p style="color:red;">${err.message}</p>`;
         }
     }
+
+    document.getElementById("filter-btn").addEventListener("click", e => {
+      e.preventDefault();
+      loadResults();
+    });
 
     loadResults();
   </script>

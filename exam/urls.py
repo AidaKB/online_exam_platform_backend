@@ -25,7 +25,7 @@ urlpatterns = [
 
     path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/options/'
          , views.OptionListCreateAPIView.as_view(), name='option'),
-    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/options/<int:pk>'
+    path('classrooms/<int:classroom_id>/exams/<int:exam_id>/questions/<int:question_id>/options/<int:pk>/'
          , views.OptionDetailAPIView.as_view(), name='option'),
 
     path('answers/', views.UserAnswerListCreateAPIView.as_view(), name='user-answer'),
