@@ -6,22 +6,89 @@
   <title>ویرایش سوال</title>
   <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
   <style>
-    .option-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 8px 0;
+    .form-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .option-item input[type="text"] {
-        flex: 1;
-        padding: 8px;
-        border: 1px solid #ccc;
+
+    .form-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .form-input, textarea, select {
+        padding: 10px;
+        border: 1px solid #d1d5db;
         border-radius: 8px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;  /* اضافه شد */
     }
+
+    #question-score {
+        min-height: 40px; /* ارتفاع یکنواخت با textarea */
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    .option-item input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
     .option-item label {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #options-section h3 {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #111827;
     }
   </style>
 </head>
@@ -32,18 +99,25 @@
   </header>
 
   <form id="question-form" class="form-container">
-    <label>متن سوال</label>
-    <textarea id="question-text" class="form-input"></textarea>
 
-    <label>نوع سوال</label>
-    <select id="question-type" class="form-input" disabled>
-      <option value="MultipleChoice">چندگزینه‌ای</option>
-      <option value="TrueFalse">درست/نادرست</option>
-      <option value="Descriptive">تشریحی</option>
-    </select>
+    <div class="form-group">
+      <label for="question-text">متن سوال</label>
+      <textarea id="question-text" class="form-input"></textarea>
+    </div>
 
-    <label>نمره</label>
-    <input type="number" id="question-score" class="form-input" />
+    <div class="form-group">
+      <label for="question-type">نوع سوال</label>
+      <select id="question-type" class="form-input" disabled>
+        <option value="MultipleChoice">چندگزینه‌ای</option>
+        <option value="TrueFalse">درست/نادرست</option>
+        <option value="Descriptive">تشریحی</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="question-score">نمره</label>
+      <input type="number" id="question-score" class="form-input" />
+    </div>
 
     <!-- گزینه‌ها فقط برای تستی -->
     <div id="options-section" style="display:none;">
@@ -52,7 +126,9 @@
       <button type="button" id="add-option-btn" class="btn-primary">➕ افزودن گزینه</button>
     </div>
 
-    <button type="submit" class="btn-primary">💾 ذخیره تغییرات</button>
+    <div style="margin-top: 20px;">
+      <button type="submit" class="btn-primary">💾 ذخیره تغییرات</button>
+    </div>
   </form>
 
   <script>
