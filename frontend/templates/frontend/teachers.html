@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>اساتید موسسه</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+      <style>
+    body {
+      font-family: 'IRANSans', Tahoma, sans-serif;
+    }
+    /* دکمه افزودن استاد */
+    .top-buttons {
+      max-width: 1000px;
+      margin: 1rem auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      font-family: 'IRANSans', Tahoma, sans-serif;
+      background-color: #3498db;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: #2980b9;
+    }
+
+    /* فرم فیلتر */
+    .filters {
+      max-width: 1000px;
+      margin: 1rem auto 2rem auto;
+      background: rgba(255,255,255,0.95);
+      padding: 1.5rem 2rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: flex-start;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 150px;
+    }
+    .filter-group label {
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+      color: #333;
+      font-weight: bold;
+    }
+    .filters input,
+    .filters select {
+      font-family: 'IRANSans', Tahoma, sans-serif;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+    .filters input:focus,
+    .filters select:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 6px rgba(52,152,219,0.4);
+      background-color: #fff;
+    }
+
+    /* لیست کارت استادها */
+    .teacher-list {
+      max-width: 1000px;
+      margin: 0 auto 4rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 0 1rem;
+    }
+    .teacher-card {
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      border-top: 5px solid #f1c40f;
+      position: relative;
+      transition: all 0.3s ease;
+      color: #2c3e50;
+      text-align: right;
+      cursor: pointer;
+    }
+    .teacher-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      background-color: #f9f9f9;
+    }
+    .teacher-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+    .teacher-card p {
+      margin: 0.3rem 0;
+      font-size: 1rem;
+      color: #555;
+    }
+    .teacher-card .btn-remove {
+      font-family: 'IRANSans', Tahoma, sans-serif;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 0.95rem;
+      background-color: #e74c3c;
+      color: white;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .teacher-card .btn-remove:hover {
+      background-color: #c0392b;
+    }
+
+    /* ریسپانسیو */
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .top-buttons {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1>اساتید موسسه</h1>
+    <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">⬅️ بازگشت</button>
+  </header>
+
+  <div class="top-buttons">
+    <button class="btn-primary" id="add-teacher-btn">➕ افزودن استاد</button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <input type="text" id="search" placeholder="جستجو بر اساس نام، ایمیل یا تخصص">
+    </div>
+    <div class="filter-group">
+      <input type="text" id="national_code" placeholder="کد ملی">
+    </div>
+    <div class="filter-group">
+      <input type="text" id="phone_number" placeholder="شماره تماس">
+    </div>
+    <div class="filter-group">
+      <input type="text" id="expertise" placeholder="تخصص">
+    </div>
+    <div class="filter-group">
+      <label for="created_from">تاریخ از</label>
+      <input type="date" id="created_from">
+    </div>
+    <div class="filter-group">
+      <label for="created_to">تاریخ تا</label>
+      <input type="date" id="created_to">
+    </div>
+    <button class="btn-primary" id="filter-btn">اعمال فیلتر</button>
+  </div>
+
+  <div class="teacher-list" id="teacher-list">
+    <!-- کارت‌های استادها اینجا اضافه می‌شوند -->
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const teacherListEl = document.getElementById("teacher-list");
+    const API_URL = "http://localhost:8000/api/core/teachers/";
+
+    async function fetchTeachers(params = {}) {
+      let url = new URL(API_URL);
+      Object.keys(params).forEach(key => {
+        if (params[key]) url.searchParams.append(key, params[key]);
+      });
+
+      const resp = await fetch(url, { headers: { "Authorization": `Token ${token}` } });
+      if (!resp.ok) return alert("خطا در دریافت لیست استادها");
+      const data = await resp.json();
+      renderTeachers(data);
+    }
+
+    function renderTeachers(teachers) {
+      teacherListEl.innerHTML = "";
+      teachers.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "teacher-card";
+        div.innerHTML = `
+          <h3>${t.account.first_name} ${t.account.last_name}</h3>
+          <p>ایمیل: ${t.account.email}</p>
+          <p>کد ملی: ${t.national_code}</p>
+          <p>شماره تماس: ${t.phone_number}</p>
+          <p>تخصص: ${t.expertise}</p>
+          <p>تاریخ عضویت: ${new Date(t.created_at).toLocaleDateString('fa-IR')}</p>
+          <button class="btn-remove">حذف</button>
+        `;
+        div.querySelector(".btn-remove").addEventListener("click", async () => {
+          if (!confirm("آیا مطمئن هستید می‌خواهید این استاد را حذف کنید؟")) return;
+          const resp = await fetch(`${API_URL}${t.id}/`, { method: "DELETE", headers: { "Authorization": `Token ${token}` } });
+          if (resp.ok) div.remove();
+          else alert("خطا در حذف استاد");
+        });
+        teacherListEl.appendChild(div);
+      });
+    }
+
+    document.getElementById("filter-btn").addEventListener("click", () => {
+      const params = {
+        search: document.getElementById("search").value,
+        national_code: document.getElementById("national_code").value,
+        phone_number: document.getElementById("phone_number").value,
+        expertise: document.getElementById("expertise").value,
+        created_at_after: document.getElementById("created_from").value,
+        created_at_before: document.getElementById("created_to").value,
+      };
+      fetchTeachers(params);
+    });
+
+    document.getElementById("add-teacher-btn").addEventListener("click", () => {
+      window.location.href = "/dashboard/institute/teachers/add/";
+    });
+
+    // لود اولیه
+    fetchTeachers();
+  </script>
+</body>
+</html>
