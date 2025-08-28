@@ -5,7 +5,7 @@ from . import consts
 
 class Classroom(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام کلاس")
-    teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, null=True, blank=True, related_name="classrooms",
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True, related_name="classrooms",
                                 verbose_name="استاد")
     grade = models.CharField(max_length=30, choices=consts.GRADE_CHOICES, verbose_name="پایه تحصیلی")
     description = models.TextField(null=True, blank=True, verbose_name="توضیحات")
@@ -20,9 +20,9 @@ class Classroom(models.Model):
 
 
 class StudentClassroom(models.Model):
-    classroom = models.ForeignKey(Classroom, on_delete=models.PROTECT, related_name="student_classroom",
+    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name="student_classroom",
                                   verbose_name="کلاس")
-    student = models.ForeignKey(Student, on_delete=models.PROTECT, related_name="student_classroom",
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="student_classroom",
                                 verbose_name="دانشجو")
 
 
@@ -35,7 +35,7 @@ class Major(models.Model):
 
 class ExamCategory(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام دسته‌بندی")
-    creator = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="exam_categories")
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="exam_categories")
 
     class Meta:
         verbose_name = "دسته‌بندی آزمون"

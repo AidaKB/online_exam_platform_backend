@@ -210,6 +210,9 @@ class StudentSerializer(serializers.ModelSerializer):
     account = CustomUserSerializer(read_only=True)
     institute = InstituteSerializer(read_only=True)
 
+    major = serializers.StringRelatedField(read_only=True)
+    major_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = models.Student
         fields = (
@@ -219,6 +222,7 @@ class StudentSerializer(serializers.ModelSerializer):
             'national_code',
             'phone_number',
             'major',
+            'major_id',
             'date_of_birth',
             'gender',
             'created_at',

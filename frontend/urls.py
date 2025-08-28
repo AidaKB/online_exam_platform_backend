@@ -10,7 +10,7 @@ urlpatterns = [
 
     path('dashboard/institute/', views.institute_dashboard, name='institute_dashboard'),
     path('dashboard/institute/profile/', TemplateView.as_view(template_name='frontend/institute_profile.html'),
-         name='institute-profile'),
+         name='institute_profile'),
     path('dashboard/institute/classes/', TemplateView.as_view(template_name="frontend/institute_classes.html")),
     path('dashboard/institute/classes/add/', TemplateView.as_view(template_name="frontend/add_classes.html")),
     path('dashboard/institute/classes/<int:cls_id>/',
@@ -74,4 +74,21 @@ urlpatterns = [
         TemplateView.as_view(template_name="frontend/teachers.html"),
         name='teachers'
     ),
+    path(
+        "dashboard/institute/teachers/add/",
+        TemplateView.as_view(template_name="frontend/add_teacher.html"),
+        name='add_teachers'
+    ),
+    path(
+        "dashboard/institute/students/",
+        TemplateView.as_view(template_name="frontend/students.html"),
+        name='students'
+    ),
+    path(
+        "dashboard/institute/students/add/",
+        TemplateView.as_view(template_name="frontend/add_student.html"),
+        name='add_students'
+  ),
+
+
 ]

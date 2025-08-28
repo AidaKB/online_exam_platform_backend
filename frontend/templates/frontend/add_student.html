@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>افزودن دانش‌آموز</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+  <style>
+  .form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { font-weight: bold; display: block; margin-bottom: .5rem; }
+  .form-group input,
+  .form-group select,
+  .form-group option {
+    width: 100%;
+    padding: .6rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'IRANSans', Tahoma, sans-serif; /* همینجا فونت رو ست کردیم */
+    font-size: 0.95rem;
+  }
+  .btn-primary {
+    background: #3498db; color: #fff; border: none;
+    padding: .8rem 1.5rem; border-radius: 10px; cursor: pointer;
+    font-family: 'IRANSans', Tahoma, sans-serif;
+  }
+  .btn-back {
+    background: #2980b9; color: #fff; border: none;
+    padding: .6rem 1.2rem; border-radius: 8px; cursor: pointer;
+    font-family: 'IRANSans', Tahoma, sans-serif;
+  }
+  .major-wrapper { display: flex; gap: .5rem; align-items: center; }
+</style>
+
+</head>
+<body>
+  <div class="form-container">
+    <h2>افزودن دانش‌آموز جدید</h2>
+    <form id="student-form">
+      <div class="form-group">
+        <label>نام کاربری</label>
+        <input type="text" id="username" required>
+      </div>
+      <div class="form-group">
+        <label>نام</label>
+        <input type="text" id="first_name" required>
+      </div>
+      <div class="form-group">
+        <label>نام خانوادگی</label>
+        <input type="text" id="last_name" required>
+      </div>
+      <div class="form-group">
+        <label>رمز عبور</label>
+        <input type="password" id="password" required>
+      </div>
+      <div class="form-group">
+        <label>تکرار رمز عبور</label>
+        <input type="password" id="password2" required>
+      </div>
+      <div class="form-group">
+        <label>کد ملی</label>
+        <input type="text" id="national_code" required>
+      </div>
+      <div class="form-group">
+        <label>شماره تماس</label>
+        <input type="text" id="phone_number" required>
+      </div>
+      <div class="form-group">
+        <label>تاریخ تولد</label>
+        <input type="date" id="date_of_birth">
+      </div>
+      <div class="form-group">
+        <label>جنسیت</label>
+        <select id="gender">
+          <option value="">انتخاب کنید</option>
+          <option value="male">مرد</option>
+          <option value="female">زن</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>رشته تحصیلی</label>
+        <div class="major-wrapper">
+          <select id="major_id" required></select>
+          <button type="button" id="add-major-btn" class="btn-primary">➕ افزودن رشته</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary">ثبت دانش‌آموز</button>
+      <button type="button" class="btn-back" onclick="window.location.href='/dashboard/institute/students/'">بازگشت</button>
+    </form>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+
+    async function getInstituteId() {
+      const resp = await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (!resp.ok) throw new Error("خطا در دریافت اطلاعات موسسه");
+      const data = await resp.json();
+      return data.institute.id;
+    }
+
+    // بارگذاری رشته‌ها
+    async function loadMajors() {
+      const resp = await fetch("http://localhost:8000/api/exam/majors/", {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      if (resp.ok) {
+        const majors = await resp.json();
+        const select = document.getElementById("major_id");
+        select.innerHTML = "";
+        majors.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.name;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    document.getElementById("add-major-btn").addEventListener("click", async () => {
+      const name = prompt("نام رشته جدید:");
+      if (!name) return;
+      const resp = await fetch("http://localhost:8000/api/exam/majors/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name })
+      });
+      if (resp.ok) {
+        alert("رشته اضافه شد ✅");
+        loadMajors();
+      } else {
+        const err = await resp.json();
+        alert("خطا: " + JSON.stringify(err));
+      }
+    });
+
+    document.getElementById("student-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const instituteId = await getInstituteId();
+
+        const payload = {
+          username: document.getElementById("username").value,
+          first_name: document.getElementById("first_name").value,
+          last_name: document.getElementById("last_name").value,
+          password: document.getElementById("password").value,
+          password2: document.getElementById("password2").value,
+          institute_id: instituteId,
+          national_code: document.getElementById("national_code").value,
+          phone_number: document.getElementById("phone_number").value,
+          date_of_birth: document.getElementById("date_of_birth").value || null,
+          gender: document.getElementById("gender").value,
+          major_id: document.getElementById("major_id").value,
+        };
+
+        const resp = await fetch("http://localhost:8000/api/core/auth/signup/student/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Token ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+          alert("دانش‌آموز با موفقیت ثبت شد ✅");
+          window.location.href = "/dashboard/institute/students/";
+        } else {
+          const err = await resp.json();
+          alert("خطا: " + JSON.stringify(err));
+        }
+      } catch (err) {
+        alert("اشکال در ثبت دانش‌آموز: " + err.message);
+      }
+    });
+
+    // لود اولیه
+    loadMajors();
+  </script>
+</body>
+</html>

@@ -1,15 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-{% load static %}
 <head>
   <meta charset="UTF-8">
-  <title>اساتید موسسه</title>
+  <title>دانش‌آموزهای موسسه</title>
   <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
-      <style>
+  <style>
     body {
       font-family: 'IRANSans', Tahoma, sans-serif;
     }
-    /* دکمه افزودن استاد */
+    /* دکمه افزودن دانش‌آموز */
     .top-buttons {
       max-width: 1000px;
       margin: 1rem auto;
@@ -74,7 +74,7 @@
       background-color: #fff;
     }
 
-    /* لیست کارت استادها */
+    /* لیست کارت دانش‌آموزها */
     .teacher-list {
       max-width: 1000px;
       margin: 0 auto 4rem auto;
@@ -142,17 +142,17 @@
 </head>
 <body>
   <header class="page-header">
-    <h1>اساتید موسسه</h1>
+    <h1>دانش‌آموزهای موسسه</h1>
     <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">⬅️ بازگشت</button>
   </header>
 
   <div class="top-buttons">
-    <button class="btn-primary" id="add-teacher-btn">➕ افزودن استاد</button>
+    <button class="btn-primary" id="add-student-btn">➕ افزودن دانش‌آموز</button>
   </div>
 
   <div class="filters">
     <div class="filter-group">
-      <input type="text" id="search" placeholder="جستجو بر اساس نام یا تخصص">
+      <input type="text" id="search" placeholder="جستجو بر اساس نام، کدملی یا شماره تماس">
     </div>
     <div class="filter-group">
       <input type="text" id="national_code" placeholder="کد ملی">
@@ -161,7 +161,20 @@
       <input type="text" id="phone_number" placeholder="شماره تماس">
     </div>
     <div class="filter-group">
-      <input type="text" id="expertise" placeholder="تخصص">
+      <label for="gender">جنسیت</label>
+      <select id="gender">
+        <option value="">همه</option>
+        <option value="male">مرد</option>
+        <option value="female">زن</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="dob_from">تاریخ تولد از</label>
+      <input type="date" id="dob_from">
+    </div>
+    <div class="filter-group">
+      <label for="dob_to">تاریخ تولد تا</label>
+      <input type="date" id="dob_to">
     </div>
     <div class="filter-group">
       <label for="created_from">تاریخ عضویت از</label>
@@ -174,68 +187,79 @@
     <button class="btn-primary" id="filter-btn">اعمال فیلتر</button>
   </div>
 
-  <div class="teacher-list" id="teacher-list">
-    <!-- کارت‌های استادها اینجا اضافه می‌شوند -->
+  <div class="teacher-list" id="student-list">
+    <!-- کارت‌های دانش‌آموزها اینجا اضافه می‌شوند -->
   </div>
 
   <script>
     const token = localStorage.getItem("token");
-    const teacherListEl = document.getElementById("teacher-list");
-    const API_URL = "http://localhost:8000/api/core/teachers/";
+    const studentListEl = document.getElementById("student-list");
+    const API_URL = "http://localhost:8000/api/core/students/";
 
-    async function fetchTeachers(params = {}) {
+    async function fetchStudents(params = {}) {
       let url = new URL(API_URL);
       Object.keys(params).forEach(key => {
         if (params[key]) url.searchParams.append(key, params[key]);
       });
 
       const resp = await fetch(url, { headers: { "Authorization": `Token ${token}` } });
-      if (!resp.ok) return alert("خطا در دریافت لیست استادها");
+      if (!resp.ok) return alert("خطا در دریافت لیست دانش‌آموزها");
       const data = await resp.json();
-      renderTeachers(data);
+      renderStudents(data);
     }
 
-    function renderTeachers(teachers) {
-      teacherListEl.innerHTML = "";
-      teachers.forEach(t => {
+    function renderStudents(students) {
+      studentListEl.innerHTML = "";
+      students.forEach(s => {
+        const genderMap = {
+          male: "مرد",
+          female: "زن",
+        };
+        const genderFa = genderMap[s.gender] || "-";
+
         const div = document.createElement("div");
         div.className = "teacher-card";
         div.innerHTML = `
-          <h3>${t.account.first_name} ${t.account.last_name}</h3>
-          <p>کد ملی: ${t.national_code}</p>
-          <p>شماره تماس: ${t.phone_number}</p>
-          <p>تخصص: ${t.expertise}</p>
-          <p>تاریخ عضویت: ${new Date(t.created_at).toLocaleDateString('fa-IR')}</p>
+          <h3>${s.account.first_name || ""} ${s.account.last_name || ""}</h3>
+          <p>کد ملی: ${s.national_code}</p>
+          <p>شماره تماس: ${s.phone_number}</p>
+          <p>رشته: ${s.major ? s.major : "-"}</p>
+          <p>تاریخ تولد: ${s.date_of_birth || "-"}</p>
+          <p>جنسیت: ${genderFa}</p>
+          <p>تاریخ عضویت: ${new Date(s.created_at).toLocaleDateString('fa-IR')}</p>
           <button class="btn-remove">حذف</button>
         `;
         div.querySelector(".btn-remove").addEventListener("click", async () => {
-          if (!confirm("آیا مطمئن هستید می‌خواهید این استاد را حذف کنید؟")) return;
-          const resp = await fetch(`${API_URL}${t.id}/`, { method: "DELETE", headers: { "Authorization": `Token ${token}` } });
+          if (!confirm("آیا مطمئن هستید می‌خواهید این دانش‌آموز را حذف کنید؟")) return;
+          const resp = await fetch(`${API_URL}${s.id}/`, { method: "DELETE", headers: { "Authorization": `Token ${token}` } });
           if (resp.ok) div.remove();
-          else alert("خطا در حذف استاد");
+          else alert("خطا در حذف دانش‌آموز");
         });
-        teacherListEl.appendChild(div);
+        studentListEl.appendChild(div);
       });
     }
+
 
     document.getElementById("filter-btn").addEventListener("click", () => {
       const params = {
         search: document.getElementById("search").value,
         national_code: document.getElementById("national_code").value,
         phone_number: document.getElementById("phone_number").value,
-        expertise: document.getElementById("expertise").value,
+        gender: document.getElementById("gender").value,
+        date_of_birth_after: document.getElementById("dob_from").value,
+        date_of_birth_before: document.getElementById("dob_to").value,
         created_at_after: document.getElementById("created_from").value,
         created_at_before: document.getElementById("created_to").value,
       };
-      fetchTeachers(params);
+      fetchStudents(params);
     });
 
-    document.getElementById("add-teacher-btn").addEventListener("click", () => {
-      window.location.href = "/dashboard/institute/teachers/add/";
+    document.getElementById("add-student-btn").addEventListener("click", () => {
+      window.location.href = "/dashboard/institute/students/add/";
     });
 
     // لود اولیه
-    fetchTeachers();
+    fetchStudents();
   </script>
 </body>
 </html>
