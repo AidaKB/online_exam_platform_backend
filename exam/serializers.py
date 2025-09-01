@@ -451,6 +451,21 @@ class UserExamResultSerializer(serializers.ModelSerializer):
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Student.objects.all(),
+        source="user",
+        write_only=True,
+        required=False
+    )
+    exam_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Exam.objects.all(),
+        source="exam",
+        write_only=True,
+        required=False
+    )
+    user = serializers.SerializerMethodField(read_only=True)
+    exam = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.Feedback
         fields = '__all__'
@@ -461,3 +476,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
         if hasattr(user, 'student'):
             validated_data['user'] = user.student
         return super().create(validated_data)
+
+    def get_user(self, obj):
+        return StudentSerializer(obj.user).data
+
+    def get_exam(self, obj):
+        return ExamSerializer(obj.exam).data

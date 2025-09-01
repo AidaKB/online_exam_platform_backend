@@ -112,36 +112,41 @@
         return;
       }
 
-      // سپس ایجاد گزینه‌ها
-      if (question_type !== "Descriptive") {
-        const optionPromises = [];
-        optionList.querySelectorAll(".option-item").forEach(item => {
-          const optionText = item.querySelector("input[type=text]").value.trim();
-          const is_correct = item.querySelector(".is-correct").checked;
-          if(optionText) {
-            const optionPayload = { text: optionText, is_correct };
-            const url = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/options/`;
-            optionPromises.push(fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Token ${token}`
-              },
-              body: JSON.stringify(optionPayload)
-            }));
+        // سپس ایجاد گزینه‌ها
+        if (question_type !== "Descriptive") {
+          const optionPromises = [];
+          optionList.querySelectorAll(".option-item").forEach(item => {
+            const optionText = item.querySelector("input[type=text]").value.trim();
+            const is_correct = item.querySelector(".is-correct").checked;
+            if(optionText) {
+              const optionPayload = {
+                text: optionText,
+                is_correct,
+                question_id: questionId
+              };
+              const url = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/options/`;
+              optionPromises.push(fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Token ${token}`
+                },
+                body: JSON.stringify(optionPayload)
+              }));
+            }
+          });
+
+          try {
+            await Promise.all(optionPromises);
+          } catch (err) {
+            alert("ذخیره گزینه‌ها با خطا مواجه شد: " + err.message);
+            return;
           }
-        });
-        try {
-          await Promise.all(optionPromises);
-        } catch (err) {
-          alert("ذخیره گزینه‌ها با خطا مواجه شد: " + err.message);
-          return;
         }
-      }
 
       alert("سوال و گزینه‌ها با موفقیت اضافه شدند");
         const userType = window.location.pathname.split('/')[2];
-        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/questions/`;
+        {#window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/questions/`;#}
     }
 
     document.getElementById("submit-btn").addEventListener("click", createQuestion);

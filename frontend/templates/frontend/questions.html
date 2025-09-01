@@ -3,7 +3,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>سوالات آزمون</title>
+  <title>آزمون</title>
   <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
 </head>
 <body>
@@ -12,13 +12,15 @@
     <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
   </header>
 
-  <!-- دکمه‌های مدیریتی آزمون -->
-  <div class="top-buttons">
-    <button class="btn-primary" id="add-question-btn">➕ افزودن سوال</button>
-    <button class="btn-primary" id="edit-exam-btn">✏️ ویرایش آزمون</button>
-    <button class="btn-primary" id="grade-questions-btn">📝 تصحیح سوالات</button>
-    <button class="btn-primary" id="exam-results-btn">📊 نتایج آزمون</button>
-  </div>
+    <!-- دکمه‌های مدیریتی آزمون -->
+    <div class="top-buttons">
+      <button class="btn-primary" id="add-question-btn">➕ افزودن سوال</button>
+      <button class="btn-primary" id="edit-exam-btn">✏️ ویرایش آزمون</button>
+      <button class="btn-primary" id="grade-questions-btn">📝 تصحیح سوالات</button>
+      <button class="btn-primary" id="exam-results-btn">📊 نتایج آزمون</button>
+      <button class="btn-primary" id="exam-feedback-btn">💬 بازخوردهای آزمون</button>
+    </div>
+
 
   <!-- فیلترها -->
   <section class="filters">
@@ -218,6 +220,10 @@
     document.getElementById("exam-results-btn").addEventListener("click", () => {
       window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/results/`;
     });
+    document.getElementById("exam-feedback-btn").addEventListener("click", () => {
+      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/feedback/`;
+    });
+
 
   </script>
 </body>
