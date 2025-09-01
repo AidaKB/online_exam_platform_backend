@@ -140,7 +140,8 @@
       }
 
       alert("سوال و گزینه‌ها با موفقیت اضافه شدند");
-      window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/questions/`;
+        const userType = window.location.pathname.split('/')[2];
+        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/questions/`;
     }
 
     document.getElementById("submit-btn").addEventListener("click", createQuestion);

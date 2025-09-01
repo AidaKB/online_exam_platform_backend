@@ -65,7 +65,10 @@
       </div>
 
       <button type="submit" class="btn-primary">ثبت استاد</button>
-      <button type="button" class="btn-back" onclick="window.location.href='/dashboard/institute/teachers/'">بازگشت</button>
+<button type="button" class="btn-back"
+    onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/teachers/`">
+    بازگشت
+</button>
     </form>
   </div>
 
@@ -110,7 +113,7 @@
 
         if (resp.ok) {
           alert("استاد با موفقیت ثبت شد ✅");
-          window.location.href = "/dashboard/institute/teachers/";
+        window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/teachers/`;
         } else {
           const err = await resp.json();
           alert("خطا: " + JSON.stringify(err));

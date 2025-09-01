@@ -97,7 +97,7 @@
         });
         if (!resp.ok) throw new Error("خطا در ذخیره تغییرات");
         alert("آزمون با موفقیت ویرایش شد");
-        window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/questions/`;
+        window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${examId}/questions/`;
       } catch (err) {
         alert(err.message);
       }

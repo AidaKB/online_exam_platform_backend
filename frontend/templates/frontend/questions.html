@@ -135,7 +135,7 @@
           // ✅ لینک به صفحه ویرایش با کلیک روی کارت
           div.addEventListener("click", (e) => {
             if (e.target.classList.contains("btn-delete")) return; // روی حذف نره
-            window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/questions/${q.id}/edit/`;
+            window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${examId}/questions/${q.id}/edit/`;
           });
 
           // سوالات تستی (نمایش گزینه‌ها)
@@ -201,18 +201,24 @@
     loadQuestions();
 
     // دکمه‌های مدیریتی
+    const basePath = window.location.pathname.split('/')[2];
+
     document.getElementById("add-question-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/add-question/`;
+      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/add-question/`;
     });
+
     document.getElementById("edit-exam-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/edit/`;
+      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/edit/`;
     });
+
     document.getElementById("grade-questions-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/grade/`;
+      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/grade/`;
     });
+
     document.getElementById("exam-results-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/results/`;
+      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/results/`;
     });
+
   </script>
 </body>
 </html>

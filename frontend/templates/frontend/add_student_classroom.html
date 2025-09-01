@@ -51,7 +51,7 @@ const STUDENT_LIST_API = "http://localhost:8000/api/core/students/";
 const ADD_STUDENT_API = "http://localhost:8000/api/exam/students-classrooms/";
 
 document.getElementById("back-btn").addEventListener("click", () => {
-    window.location.href = `/dashboard/institute/classes/${classroomId}/students/`;
+    window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/students/`;
 });
 
 async function loadAllStudents() {

@@ -88,8 +88,10 @@
     }
 
     document.getElementById("add-category-btn").addEventListener("click", () => {
-        window.open("/dashboard/institute/categories/add/", "_blank");
+        const userType = window.location.pathname.split('/')[2];
+        window.open(`/dashboard/${userType}/categories/add/`, "_blank");
     });
+
 
     document.getElementById("exam-form").addEventListener("submit", async (e) => {
         e.preventDefault();

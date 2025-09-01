@@ -93,7 +93,7 @@
       </div>
 
       <button type="submit" class="btn-primary">ثبت دانش‌آموز</button>
-      <button type="button" class="btn-back" onclick="window.location.href='/dashboard/institute/students/'">بازگشت</button>
+        <button type="button" class="btn-back" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/students/`">بازگشت</button>
     </form>
   </div>
 
@@ -178,7 +178,7 @@
 
         if (resp.ok) {
           alert("دانش‌آموز با موفقیت ثبت شد ✅");
-          window.location.href = "/dashboard/institute/students/";
+            window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/students/`;
         } else {
           const err = await resp.json();
           alert("خطا: " + JSON.stringify(err));

@@ -9,7 +9,9 @@
 <body>
   <header>
     <h1>لیست کلاس‌ها</h1>
-        <button class="btn-back" onclick="window.location.href='/dashboard/institute/'">بازگشت به داشبورد</button>
+<button class="btn-back" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/`">
+    بازگشت به داشبورد
+</button>
   </header>
 
   <section class="filters">
@@ -50,7 +52,9 @@
 </section>
 
   <section>
-    <button class="btn-primary add-class-btn" onclick="window.location.href='/dashboard/institute/classes/add/'">افزودن کلاس</button>
+<button class="btn-primary add-class-btn" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/classes/add/`">
+  افزودن کلاس
+</button>
   </section>
 
   <section id="class-list" class="class-list"></section>
@@ -113,7 +117,7 @@
           const div = document.createElement("div");
           div.className = "class-card";
           div.onclick = () => {
-            window.location.href = `/dashboard/institute/classes/${cls.id}/`;
+            window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/classes/${cls.id}/`;
           };
           div.innerHTML = `
             <h3>${cls.name} (${gradeMap[cls.grade] || cls.grade})</h3>

@@ -15,20 +15,21 @@
 <button id="logout-btn" class="btn-logout">خروج از حساب</button>
   </header>
 
-  <main class="dashboard-content">
-    <div class="card" onclick="location.href='/dashboard/institute/profile/'">
-      <h3>ویرایش حساب کاربری</h3>
-    </div>
-    <div class="card" onclick="location.href='/dashboard/institute/classes/'">
-      <h3>کلاس‌های من</h3>
-    </div>
-    <div class="card" onclick="location.href='/dashboard/institute/teachers/'">
-      <h3>استادهای من</h3>
-    </div>
-    <div class="card" onclick="location.href='/dashboard/institute/students/'">
-      <h3>دانش‌آموزهای من</h3>
-    </div>
-  </main>
+<main class="dashboard-content">
+  <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/profile/`">
+    <h3>ویرایش حساب کاربری</h3>
+  </div>
+  <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/classes/`">
+    <h3>کلاس‌های من</h3>
+  </div>
+  <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/teachers/`">
+    <h3>استادهای من</h3>
+  </div>
+  <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/students/`">
+    <h3>دانش‌آموزهای من</h3>
+  </div>
+</main>
+
 
   <script>
     const token = localStorage.getItem("token");

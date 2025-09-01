@@ -93,7 +93,7 @@
           messageDiv.classList.remove('error');
           messageDiv.classList.add('success');
             setTimeout(() => {
-            window.location.href = '/dashboard/institute/';
+            window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/`;
           }, 1000);
         } else {
           const errorData = await response.json();

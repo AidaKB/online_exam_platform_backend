@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>افزودن کلاس جدید</h1>
-    <button class="btn-back" onclick="window.location.href='/dashboard/institute/classes/'">بازگشت</button>
+    <button class="btn-back" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/classes/`">بازگشت</button>
   </header>
 
   <main>
@@ -100,7 +100,7 @@
         }
 
         alert("کلاس با موفقیت اضافه شد.");
-        window.location.href = "/dashboard/institute/classes/";
+        window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/`;
       } catch (err) {
         alert(err.message);
       }

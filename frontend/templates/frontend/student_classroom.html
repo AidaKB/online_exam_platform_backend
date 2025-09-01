@@ -47,11 +47,11 @@ const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2
 const BASE_URL = `http://localhost:8000/api/exam/students-classrooms/`;
 
 document.getElementById("back-btn").addEventListener("click", () => {
-    window.location.href = `/dashboard/institute/classes/${classroomId}/`;
+window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/`;
 });
 
 document.getElementById("add-student-btn").addEventListener("click", () => {
-    window.location.href = `/dashboard/institute/classes/${classroomId}/students/add/`;
+    window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/students/add/`;
 });
 
 // ساخت URL API با فیلترها

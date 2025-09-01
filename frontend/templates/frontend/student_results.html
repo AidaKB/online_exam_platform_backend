@@ -104,7 +104,7 @@
                     <span class="result-score ${getScoreColor(result.score, maxScore)}">${result.score}</span>
                 `;
                 div.addEventListener("click", () => {
-                    window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${examId}/student-results/${result.user.id}/`;
+                window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${examId}/student-results/${result.user.id}/`;
                 });
                 container.appendChild(div);
             }
