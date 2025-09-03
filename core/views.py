@@ -197,7 +197,7 @@ class StudentRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UserRetrieveAPIView(generics.RetrieveAPIView):
+class UserRetrieveAPIView(generics.RetrieveUpdateAPIView):
     queryset = models.CustomUser.objects.all()
     serializer_class = serializers.CustomUserDetailSerializer
     permission_classes = [IsAuthenticated]

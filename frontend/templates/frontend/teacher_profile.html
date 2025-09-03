@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرایش حساب کاربری استاد</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <section class="form-container">
+    <h2>ویرایش اطلاعات استاد</h2>
+    <form id="teacher-form">
+      <!-- اطلاعات کاربری -->
+      <input type="text" id="first_name" name="first_name" placeholder="نام">
+      <input type="text" id="last_name" name="last_name" placeholder="نام خانوادگی">
+      <input type="email" id="email" name="email" placeholder="ایمیل">
+      <input type="text" id="username" name="username" placeholder="نام کاربری">
+
+      <!-- اطلاعات استاد -->
+      <input type="text" id="national_code" name="national_code" placeholder="کد ملی">
+      <input type="text" id="phone_number" name="phone_number" placeholder="شماره تماس">
+      <input type="text" id="expertise" name="expertise" placeholder="تخصص">
+
+      <button type="submit">ذخیره تغییرات</button>
+    </form>
+    <div id="message"></div>
+  </section>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+    const form = document.getElementById("teacher-form");
+    const messageDiv = document.getElementById("message");
+
+    let teacherId = null;
+
+    async function loadData() {
+      try {
+        // دریافت اطلاعات کاربر (که شامل teacher هم هست)
+        const userResp = await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        const userData = await userResp.json();
+
+        // پر کردن فیلدهای کاربر
+        form.first_name.value = userData.first_name || "";
+        form.last_name.value = userData.last_name || "";
+        form.email.value = userData.email || "";
+        form.username.value = userData.username || "";
+
+        // استخراج اطلاعات استاد از داخل ریسپانس
+        if (userData.teacher) {
+          teacherId = userData.teacher.id;
+          form.national_code.value = userData.teacher.national_code || "";
+          form.phone_number.value = userData.teacher.phone_number || "";
+          form.expertise.value = userData.teacher.expertise || "";
+        } else {
+          messageDiv.textContent = "اطلاعات استاد یافت نشد.";
+          messageDiv.classList.add("error");
+        }
+
+      } catch (err) {
+        messageDiv.textContent = "خطا در بارگذاری اطلاعات";
+        messageDiv.classList.add("error");
+      }
+    }
+
+    loadData();
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      try {
+        // آپدیت اطلاعات کاربر
+        await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            first_name: form.first_name.value,
+            last_name: form.last_name.value,
+            email: form.email.value,
+            username: form.username.value
+          })
+        });
+
+        // آپدیت اطلاعات استاد (با teacherId که از userData گرفتیم)
+        if (teacherId) {
+          await fetch(`http://localhost:8000/api/core/teachers/${teacherId}/`, {
+            method: "PUT",
+            headers: {
+              "Authorization": `Token ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              national_code: form.national_code.value,
+              phone_number: form.phone_number.value,
+              expertise: form.expertise.value
+            })
+          });
+        }
+
+        messageDiv.textContent = "اطلاعات با موفقیت ذخیره شد.";
+        messageDiv.classList.remove("error");
+        messageDiv.classList.add("success");
+
+        setTimeout(() => {
+          window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/`;
+        }, 1000);
+
+      } catch (err) {
+        messageDiv.textContent = "ذخیره تغییرات با خطا مواجه شد.";
+        messageDiv.classList.add("error");
+      }
+    });
+  </script>
+</body>
+</html>

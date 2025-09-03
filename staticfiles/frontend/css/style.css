@@ -4,6 +4,11 @@
     font-weight: normal;
     font-style: normal;
 }
+/* پالت رنگی سایت برای نمره‌ها */
+.score-color-1 { background-color: #3498DB; }  /* آبی */
+.score-color-2 { background-color: #F1C40F; }  /* زرد */
+.score-color-3 { background-color: #BDC3C7; }  /* خاکستری روشن */
+.score-color-4 { background-color: #2C3E50; }  /* خاکستری تیره */
 
 body {
     font-family: 'IRANSans', Tahoma, sans-serif;
@@ -124,6 +129,7 @@ html, body {
     height: 100%;
 }
 .form-container {
+    font-family: 'IRANSans', Tahoma, sans-serif;
     max-width: 500px;
     margin: 4rem auto;
     background: linear-gradient(to bottom right, #ffffff, #f0f4f8);
@@ -587,6 +593,109 @@ input[type="date"]:focus {
     border: 1px solid #ccc;
     border-radius: 8px;
     font-family: 'IRANSans', Tahoma, sans-serif;
+}
+
+.option-item label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: #333;
+}
+
+.option-item .btn-remove-option {
+    flex-shrink: 0;
+}
+.results-container {
+    max-width: 900px;
+    margin: 2rem auto 4rem auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.result-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.result-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #2C3E50;
+}
+
+.result-score {
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    color: #FFFFFF;
+    min-width: 60px;
+    text-align: center;
+}
+/* باکس جواب‌ها مثل سوال‌ها */
+.answer-card {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    padding: 1.5rem 2rem;
+    border-top: 5px solid #f1c40f; /* رنگ پیش‌فرض مثل exam-card */
+    transition: all 0.3s ease;
+    color: #2c3e50;
+    text-align: right;
+}
+
+.answer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+    background-color: #f9f9f9;
+}
+
+.answer-card p {
+    margin: 0.3rem 0;
+    font-size: 1rem;
+    color: #555;
+    text-align: right;
+}
+
+/* رنگ متفاوت برای انواع پاسخ */
+.answer-card.Descriptive {
+    border-color: #2ecc71;  /* سبز برای تشریحی */
+    background: #f9fff4;
+}
+
+.answer-card.MultipleChoice {
+    border-color: #3498db;  /* آبی برای تستی */
+    background: #f0f8ff;
+}
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.option-item input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'IRANSans', Tahoma, sans-serif;
+    font-size: 14px;
 }
 
 .option-item label {

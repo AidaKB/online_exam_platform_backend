@@ -15,5 +15,10 @@ def institute_dashboard(request):
     return render(request, 'frontend/institute_dashboard.html')
 
 
+@login_required
+def teacher_dashboard(request):
+    return render(request, 'frontend/teacher_dashboard.html')
+
+
 def add_class_view(request):
     return render(request, 'frontend/add_classes.html')

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>داشبورد استاد</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="logo-title">
+      <h1 id="teacher-name">نام استاد</h1>
+      <p>خوش آمدید</p>
+    </div>
+    <button id="logout-btn" class="btn-logout">خروج از حساب</button>
+  </header>
+
+  <main class="dashboard-content">
+    <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/profile/`">
+      <h3>ویرایش حساب کاربری</h3>
+    </div>
+    <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/classes/`">
+      <h3>کلاس‌های من</h3>
+    </div>
+    <div class="card" onclick="location.href=`/dashboard/${window.location.pathname.split('/')[2]}/students/`">
+      <h3>دانش‌آموزهای من</h3>
+    </div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+    const teacherNameEl = document.getElementById("teacher-name");
+
+    if (token && userId) {
+      fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Token ${token}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("دریافت اطلاعات استاد با خطا مواجه شد.");
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.first_name || data.last_name) {
+          const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+          teacherNameEl.textContent = fullName || "استاد بدون نام";
+          localStorage.setItem("teacher_name", fullName);
+        } else {
+          teacherNameEl.textContent = "استاد بدون نام";
+        }
+      })
+      .catch(error => {
+        console.error("خطا در دریافت اطلاعات استاد:", error);
+        teacherNameEl.textContent = "خطا در بارگذاری نام استاد";
+      });
+    } else {
+      teacherNameEl.textContent = "اطلاعات ناقص است";
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = '/login/';
+    });
+  </script>
+</body>
+</html>

@@ -142,7 +142,7 @@
 </head>
 <body>
   <header class="page-header">
-    <h1>دانش‌آموزهای موسسه</h1>
+    <h1>دانش آموزهای من</h1>
     <button class="btn-back" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/`">⬅️ بازگشت</button>
   </header>
 
@@ -208,36 +208,53 @@
       renderStudents(data);
     }
 
-    function renderStudents(students) {
-      studentListEl.innerHTML = "";
-      students.forEach(s => {
-        const genderMap = {
-          male: "مرد",
-          female: "زن",
-        };
-        const genderFa = genderMap[s.gender] || "-";
+function renderStudents(students) {
+  studentListEl.innerHTML = "";
 
-        const div = document.createElement("div");
-        div.className = "teacher-card";
-        div.innerHTML = `
-          <h3>${s.account.first_name || ""} ${s.account.last_name || ""}</h3>
-          <p>کد ملی: ${s.national_code}</p>
-          <p>شماره تماس: ${s.phone_number}</p>
-          <p>رشته: ${s.major ? s.major : "-"}</p>
-          <p>تاریخ تولد: ${s.date_of_birth || "-"}</p>
-          <p>جنسیت: ${genderFa}</p>
-          <p>تاریخ عضویت: ${new Date(s.created_at).toLocaleDateString('fa-IR')}</p>
-          <button class="btn-remove">حذف</button>
-        `;
-        div.querySelector(".btn-remove").addEventListener("click", async () => {
-          if (!confirm("آیا مطمئن هستید می‌خواهید این دانش‌آموز را حذف کنید؟")) return;
-          const resp = await fetch(`${API_URL}${s.id}/`, { method: "DELETE", headers: { "Authorization": `Token ${token}` } });
-          if (resp.ok) div.remove();
-          else alert("خطا در حذف دانش‌آموز");
+  // نقش کاربر رو از مسیر URL می‌گیریم
+  const userType = window.location.pathname.split('/')[2];
+
+  students.forEach(s => {
+    const genderMap = {
+      male: "مرد",
+      female: "زن",
+    };
+    const genderFa = genderMap[s.gender] || "-";
+
+    const div = document.createElement("div");
+    div.className = "teacher-card";
+
+    // اگر نقش admin یا institute بود، دکمه حذف اضافه می‌کنیم
+    const showDeleteBtn = userType === "admin" || userType === "institute";
+
+    div.innerHTML = `
+      <h3>${s.account.first_name || ""} ${s.account.last_name || ""}</h3>
+      <p>کد ملی: ${s.national_code}</p>
+      <p>شماره تماس: ${s.phone_number}</p>
+      <p>رشته: ${s.major ? s.major : "-"}</p>
+      <p>تاریخ تولد: ${s.date_of_birth || "-"}</p>
+      <p>جنسیت: ${genderFa}</p>
+      <p>تاریخ عضویت: ${new Date(s.created_at).toLocaleDateString('fa-IR')}</p>
+      ${showDeleteBtn ? `<button class="btn-remove">حذف</button>` : ""}
+    `;
+
+    // فقط اگر اجازه حذف داشتیم، event listener اضافه می‌کنیم
+    if (showDeleteBtn) {
+      div.querySelector(".btn-remove").addEventListener("click", async () => {
+        if (!confirm("آیا مطمئن هستید می‌خواهید این دانش‌آموز را حذف کنید؟")) return;
+        const resp = await fetch(`${API_URL}${s.id}/`, {
+          method: "DELETE",
+          headers: { "Authorization": `Token ${token}` }
         });
-        studentListEl.appendChild(div);
+        if (resp.ok) div.remove();
+        else alert("خطا در حذف دانش‌آموز");
       });
     }
+
+    studentListEl.appendChild(div);
+  });
+}
+
 
 
     document.getElementById("filter-btn").addEventListener("click", () => {
