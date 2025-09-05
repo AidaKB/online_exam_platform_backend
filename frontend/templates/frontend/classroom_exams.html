@@ -14,12 +14,11 @@
   </header>
 
   <div class="top-buttons">
-    <a id="edit-class-btn" class="btn-primary" href="#">✏️ ویرایش کلاس</a>
-    <a id="add-exam-btn" class="btn-primary" href="#">
-        ➕ افزودن آزمون
-    </a>
+    <a id="edit-class-btn" class="btn-primary" href="#" style="display:none;">✏️ ویرایش کلاس</a>
+    <a id="add-exam-btn" class="btn-primary" href="#" style="display:none;">➕ افزودن آزمون</a>
     <a id="view-students-btn" class="btn-primary" href="#">👥 مشاهده دانش‌آموزان</a>
   </div>
+
 
   <section class="filters">
       <!-- فیلترها اینجا هستند -->
@@ -76,11 +75,18 @@ async function loadClassroomName() {
         console.error(err);
     }
 }
+const userType = window.location.pathname.split('/')[2];
+
+// فقط برای admin یا institute یا teacher دکمه‌ها رو نشون بده
+if (["admin", "institute", "teacher"].includes(userType)) {
+  document.getElementById("edit-class-btn").style.display = "inline-block";
+  document.getElementById("add-exam-btn").style.display = "inline-block";
+}
 
 // لینک‌ها را بروزرسانی می‌کنیم
-document.getElementById("edit-class-btn").href = `/dashboard/institute/classes/${classroomId}/edit/`;
-document.getElementById("add-exam-btn").href = `/dashboard/institute/classes/${classroomId}/exams/add/`;
-document.getElementById("view-students-btn").href = `/dashboard/institute/classes/${classroomId}/students/`;
+document.getElementById("edit-class-btn").href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/edit/`;
+document.getElementById("add-exam-btn").href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/add/`;
+document.getElementById("view-students-btn").href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/students/`;
 
 // ساخت URL API با فیلترها
 function buildApiUrl() {
@@ -139,7 +145,7 @@ async function loadExams() {
                 <p><strong>وضعیت:</strong> ${exam.status ? "فعال" : "غیرفعال"}</p>
             `;
             div.addEventListener("click", () => {
-                window.location.href = `/dashboard/institute/classes/${classroomId}/exams/${exam.id}/questions/`;
+                window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${exam.id}/questions/`;
             });
             container.appendChild(div);
         });

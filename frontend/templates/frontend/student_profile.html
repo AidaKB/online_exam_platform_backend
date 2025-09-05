@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرایش حساب من</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+    <section class="form-container">
+  <h2>ویرایش اطلاعات من</h2>
+  <form id="profile-form">
+    <div class="form-field">
+      <input type="text" id="first_name" placeholder="نام">
+    </div>
+
+    <div class="form-field">
+      <input type="text" id="last_name" placeholder="نام خانوادگی">
+    </div>
+
+    <div class="form-field">
+      <input type="text" id="username" placeholder="نام کاربری">
+    </div>
+
+    <div class="form-field">
+      <input type="email" id="email" placeholder="ایمیل" required>
+    </div>
+
+    <div class="form-field">
+      <input type="text" id="national_code" placeholder="کد ملی">
+    </div>
+
+    <div class="form-field">
+      <input type="text" id="phone_number" placeholder="شماره تماس">
+    </div>
+
+    <div class="form-field">
+      <select id="major">
+        <option value="">انتخاب رشته</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label for="date_of_birth">تاریخ تولد</label>
+      <input type="date" id="date_of_birth">
+    </div>
+
+    <div class="form-field">
+      <select id="gender">
+        <option value="">انتخاب جنسیت</option>
+        <option value="male">مرد</option>
+        <option value="female">زن</option>
+      </select>
+    </div>
+
+    <button type="submit">ذخیره تغییرات</button>
+  </form>
+  <div id="message"></div>
+</section>
+
+
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+    const form = document.getElementById("profile-form");
+    const messageDiv = document.getElementById("message");
+
+    let studentId = null;
+
+    async function loadMajors(selectedMajor) {
+      const resp = await fetch("http://localhost:8000/api/exam/majors/", {
+        headers: { "Authorization": `Token ${token}` }
+      });
+      const majors = await resp.json();
+      const select = document.getElementById("major");
+      select.innerHTML = majors.map(m =>
+        `<option value="${m.id}" ${m.name === selectedMajor ? "selected" : ""}>${m.name}</option>`
+      ).join("");
+    }
+
+    async function loadProfile() {
+      try {
+        const resp = await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!resp.ok) {
+          messageDiv.textContent = "خطا در بارگذاری اطلاعات.";
+          messageDiv.classList.add("error");
+          return;
+        }
+        const data = await resp.json();
+
+        // پر کردن فیلدهای User
+        form.first_name.value = data.first_name || "";
+        form.last_name.value = data.last_name || "";
+        form.username.value = data.username || "";
+        form.email.value = data.email || "";
+
+        // پر کردن فیلدهای Student
+        if (data.student) {
+          studentId = data.student.id;
+          form.national_code.value = data.student.national_code || "";
+          form.phone_number.value = data.student.phone_number || "";
+          form.date_of_birth.value = data.student.date_of_birth || "";
+          form.gender.value = data.student.gender || "";
+          await loadMajors(data.student.major);
+        }
+      } catch (err) {
+        messageDiv.textContent = "ارتباط با سرور برقرار نشد.";
+        messageDiv.classList.add("error");
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      try {
+        // آپدیت User
+        await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            first_name: form.first_name.value,
+            last_name: form.last_name.value,
+            username: form.username.value,
+            email: form.email.value
+          })
+        });
+
+        // آپدیت Student
+        if (studentId) {
+          await fetch(`http://localhost:8000/api/core/students/${studentId}/`, {
+            method: "PATCH",
+            headers: {
+              "Authorization": `Token ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              national_code: form.national_code.value,
+              phone_number: form.phone_number.value,
+              major_id: parseInt(form.major.value),
+              date_of_birth: form.date_of_birth.value,
+              gender: form.gender.value
+            })
+          });
+        }
+
+        messageDiv.textContent = "اطلاعات با موفقیت ذخیره شد ✅";
+        messageDiv.classList.remove("error");
+        messageDiv.classList.add("success");
+
+      } catch (err) {
+        messageDiv.textContent = "ذخیره تغییرات با خطا مواجه شد ❌";
+        messageDiv.classList.add("error");
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

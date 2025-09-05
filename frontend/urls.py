@@ -10,6 +10,7 @@ urlpatterns = [
 
     path('dashboard/institute/', views.institute_dashboard, name='institute_dashboard'),
     path('dashboard/teacher/', views.teacher_dashboard, name='teacher_dashboard'),
+    path('dashboard/student/', views.student_dashboard, name='teacher_dashboard'),
 
     path(
         'dashboard/institute/profile/',
@@ -19,6 +20,11 @@ urlpatterns = [
     path(
         'dashboard/teacher/profile/',
         TemplateView.as_view(template_name='frontend/teacher_profile.html'),
+        name='profile'
+    ),
+    path(
+        'dashboard/student/profile/',
+        TemplateView.as_view(template_name='frontend/student_profile.html'),
         name='profile'
     ),
     path(

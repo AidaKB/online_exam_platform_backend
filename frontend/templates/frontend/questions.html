@@ -5,6 +5,34 @@
   <meta charset="UTF-8" />
   <title>آزمون</title>
   <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+  <style>
+    .answer-box {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      font-family: 'IRANSans', sans-serif;
+      resize: vertical;
+    }
+    .send-answer-btn {
+      margin-top: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #1E90FF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-family: 'IRANSans', sans-serif;
+      transition: background-color 0.2s;
+    }
+    .send-answer-btn:hover {
+      background-color: #187bcd;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -12,15 +40,16 @@
     <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
   </header>
 
-    <!-- دکمه‌های مدیریتی آزمون -->
-    <div class="top-buttons">
-      <button class="btn-primary" id="add-question-btn">➕ افزودن سوال</button>
-      <button class="btn-primary" id="edit-exam-btn">✏️ ویرایش آزمون</button>
-      <button class="btn-primary" id="grade-questions-btn">📝 تصحیح سوالات</button>
-      <button class="btn-primary" id="exam-results-btn">📊 نتایج آزمون</button>
-      <button class="btn-primary" id="exam-feedback-btn">💬 بازخوردهای آزمون</button>
-    </div>
+  <div id="exam-status" style="text-align:center; font-size:18px; font-weight:bold; margin:15px;"></div>
 
+  <!-- دکمه‌های مدیریتی -->
+  <div class="top-buttons" id="exam-buttons">
+    <button class="btn-primary" id="add-question-btn">➕ افزودن سوال</button>
+    <button class="btn-primary" id="edit-exam-btn">✏️ ویرایش آزمون</button>
+    <button class="btn-primary" id="grade-questions-btn">📝 تصحیح سوالات</button>
+    <button class="btn-primary" id="exam-results-btn">📊 نتایج آزمون</button>
+    <button class="btn-primary" id="exam-feedback-btn">💬 بازخوردهای آزمون</button>
+  </div>
 
   <!-- فیلترها -->
   <section class="filters">
@@ -45,7 +74,6 @@
     </div>
   </section>
 
-  <!-- سوالات تستی -->
   <section id="multiple-choice-questions">
     <h2>سوالات تستی (چندگزینه‌ای / درست‌نادرست)</h2>
     <div class="questions-container">
@@ -53,7 +81,6 @@
     </div>
   </section>
 
-  <!-- سوالات تشریحی -->
   <section id="descriptive-questions">
     <h2>سوالات تشریحی</h2>
     <div class="questions-container">
@@ -63,11 +90,17 @@
 
   <script>
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem('user_id')
+    const userType = window.location.pathname.split('/')[2];
     const pathParts = window.location.pathname.split("/").filter(Boolean);
     const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
+
     const BASE_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/`;
     const EXAM_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/`;
+    const EXAM_TIME_API = `http://localhost:8000/api/exam/exam-time/`;
+    const USER_OPTIONS_API = `http://localhost:8000/api/exam/options-answers/`;
+    const USER_ANSWERS_API = `http://localhost:8000/api/exam/answers/`;
 
     const QUESTION_TYPE_LABELS = {
       "MultipleChoice": "چندگزینه‌ای",
@@ -78,7 +111,14 @@
     const mcContainer = document.querySelector("#multiple-choice-questions .questions-container");
     const descContainer = document.querySelector("#descriptive-questions .questions-container");
 
-    // گرفتن اسم آزمون
+    // دکمه‌های مدیریتی برای دانشجو مخفی بشن
+    if (userType === "student") {
+      document.getElementById("add-question-btn").style.display = "none";
+      document.getElementById("edit-exam-btn").style.display = "none";
+      document.getElementById("grade-questions-btn").style.display = "none";
+      document.getElementById("exam-feedback-btn").style.display = "none";
+    }
+
     async function loadExamTitle() {
       try {
         const resp = await fetch(EXAM_API_URL, { headers: { "Authorization": `Token ${token}` } });
@@ -91,29 +131,76 @@
       }
     }
 
-    // ساخت URL برای فیلترها
+    // دقیقا همان منطق شمارش معکوس نسخه اول
+    async function checkStudentExam() {
+      if (userType !== "student") return;
+      try {
+        const res = await fetch(EXAM_TIME_API, {
+          method: "POST",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ exam_id: examId })
+        });
+        const data = await res.json();
+        const statusEl = document.getElementById("exam-status");
+
+        if (data.detail) {
+          alert(data.detail);
+          window.history.back();
+          return;
+        }
+
+        const finishTime = new Date(data.finish_time);
+        const now = new Date();
+        if (finishTime < now) {
+          alert("⏰ زمان آزمون به پایان رسیده است.");
+          window.history.back();
+          return;
+        }
+
+        function updateTimer() {
+          const now = new Date();
+          const diff = finishTime - now;
+          if (diff <= 0) {
+            clearInterval(timerInterval);
+            alert("⏰ زمان آزمون به پایان رسید.");
+            window.history.back();
+            return;
+          }
+          const minutes = Math.floor((diff / 1000 / 60) % 60);
+          const seconds = Math.floor((diff / 1000) % 60);
+          statusEl.style.color = "#000";
+          statusEl.textContent = `⏳ زمان باقی‌مانده: ${minutes} دقیقه و ${seconds} ثانیه`;
+        }
+
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+
+      } catch (err) {
+        console.error("خطا در بررسی وضعیت آزمون:", err);
+      }
+    }
+
     function buildApiUrl() {
       const params = new URLSearchParams();
       const text = document.getElementById("text-filter").value.trim();
       const type = document.getElementById("type-filter").value;
       const score = document.getElementById("score-filter").value.trim();
       const ordering = document.getElementById("ordering").value;
-
       if (text) params.append("text", text);
       if (type) params.append("question_type", type);
       if (score) params.append("score", score);
       if (ordering) params.append("ordering", ordering);
-
       return BASE_API_URL + "?" + params.toString();
     }
 
-    // بارگذاری سوالات
     async function loadQuestions() {
       try {
         const url = buildApiUrl();
         const response = await fetch(url, { headers: { "Authorization": `Token ${token}` } });
         if (!response.ok) throw new Error("خطا در دریافت سوالات");
-
         const data = await response.json();
         mcContainer.innerHTML = "";
         descContainer.innerHTML = "";
@@ -126,105 +213,144 @@
 
         for (const q of data) {
           const div = document.createElement("div");
-          div.className = "question-card clickable-card";
+          div.className = "question-card";
+
           div.innerHTML = `
             <h3>${q.text}</h3>
             <p><strong>نوع سوال:</strong> ${QUESTION_TYPE_LABELS[q.question_type]}</p>
             <p><strong>نمره:</strong> ${q.score}</p>
-            <button class="btn-danger btn-delete" data-id="${q.id}">🗑️ حذف</button>
           `;
 
-          // ✅ لینک به صفحه ویرایش با کلیک روی کارت
-          div.addEventListener("click", (e) => {
-            if (e.target.classList.contains("btn-delete")) return; // روی حذف نره
-            window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${examId}/questions/${q.id}/edit/`;
-          });
+          if (userType === "student") {
+            if (q.question_type === "MultipleChoice" || q.question_type === "TrueFalse") {
+              const optionsResponse = await fetch(
+                `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${q.id}/options/`,
+                { headers: { "Authorization": `Token ${token}` } }
+              );
+              const options = await optionsResponse.json();
+              const ul = document.createElement("ul");
+              ul.className = "option-list";
+              options.forEach(opt => {
+                const li = document.createElement("li");
+                const radio = document.createElement("input");
+                radio.type = "radio";
+                radio.name = `question-${q.id}`;
+                radio.value = opt.id;
+                li.appendChild(radio);
+                li.appendChild(document.createTextNode(` ${opt.text}`));
+                ul.appendChild(li);
+              });
+              div.appendChild(ul);
 
-          // سوالات تستی (نمایش گزینه‌ها)
-          if (q.question_type === "MultipleChoice" || q.question_type === "TrueFalse") {
-            const optionsResponse = await fetch(
-              `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${q.id}/options/`,
-              { headers: { "Authorization": `Token ${token}` } }
-            );
-            const options = await optionsResponse.json();
+              const sendBtn = document.createElement("button");
+              sendBtn.className = "send-answer-btn";
+              sendBtn.textContent = "ارسال پاسخ";
+              sendBtn.addEventListener("click", async () => {
+                const selected = div.querySelector(`input[name="question-${q.id}"]:checked`);
+                if (!selected) { alert("لطفا یک گزینه انتخاب کنید."); return; }
+                await fetch(USER_OPTIONS_API, {
+                  method: "POST",
+                  headers: { "Authorization": `Token ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({question_id: q.id, answer_option_id: selected.value })
+                });
+                alert("پاسخ شما ثبت شد ✅");
+              });
+              div.appendChild(sendBtn);
+            } else if (q.question_type === "Descriptive") {
+              const textarea = document.createElement("textarea");
+              textarea.className = "answer-box";
+              textarea.placeholder = "پاسخ خود را وارد کنید...";
+              div.appendChild(textarea);
 
-            const ul = document.createElement("ul");
-            ul.className = "option-list";
-            options.forEach(opt => {
-              const li = document.createElement("li");
-              li.innerHTML = `${opt.text} ${opt.is_correct ? "✅" : ""}`;
-              ul.appendChild(li);
-            });
-            div.appendChild(ul);
-          }
-
-          // افزودن به بخش مناسب
-          if (q.question_type === "Descriptive") {
-            descContainer.appendChild(div);
+              const sendBtn = document.createElement("button");
+              sendBtn.className = "send-answer-btn";
+              sendBtn.textContent = "ارسال پاسخ";
+              sendBtn.addEventListener("click", async () => {
+                if (!textarea.value.trim()) { alert("لطفا پاسخ خود را وارد کنید."); return; }
+                await fetch(USER_ANSWERS_API, {
+                  method: "POST",
+                  headers: { "Authorization": `Token ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({question_id: q.id, answer_text: textarea.value })
+                });
+                alert("پاسخ شما ثبت شد ✅");
+              });
+              div.appendChild(sendBtn);
+            }
           } else {
-            mcContainer.appendChild(div);
+            div.classList.add("clickable-card");
+            div.innerHTML += `<button class="btn-danger btn-delete" data-id="${q.id}">🗑️ حذف</button>`;
+            div.addEventListener("click", (e) => {
+              if (e.target.classList.contains("btn-delete")) return;
+              window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/questions/${q.id}/edit/`;
+            });
+
+            if (q.question_type === "MultipleChoice" || q.question_type === "TrueFalse") {
+              const optionsResponse = await fetch(
+                `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${q.id}/options/`,
+                { headers: { "Authorization": `Token ${token}` } }
+              );
+              const options = await optionsResponse.json();
+              const ul = document.createElement("ul");
+              ul.className = "option-list";
+              options.forEach(opt => {
+                const li = document.createElement("li");
+                li.innerHTML = `${opt.text} ${opt.is_correct ? "✅" : ""}`;
+                ul.appendChild(li);
+              });
+              div.appendChild(ul);
+            }
           }
+
+          if (q.question_type === "Descriptive") descContainer.appendChild(div);
+          else mcContainer.appendChild(div);
         }
 
-        // دکمه‌های حذف
-        document.querySelectorAll(".btn-delete").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            e.stopPropagation(); // تا کلیک روی کارت نره
-            const questionId = e.target.dataset.id;
-            if (!confirm("آیا مطمئن هستید می‌خواهید این سوال را حذف کنید؟")) return;
-
-            try {
-              const deleteResp = await fetch(
+        if (userType !== "student") {
+          document.querySelectorAll(".btn-delete").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const questionId = e.target.dataset.id;
+              if (!confirm("آیا مطمئن هستید می‌خواهید این سوال را حذف کنید؟")) return;
+              const del = await fetch(
                 `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/`,
                 { method: "DELETE", headers: { "Authorization": `Token ${token}` } }
               );
-              if (!deleteResp.ok) throw new Error("حذف سوال موفقیت‌آمیز نبود");
-              loadQuestions();
-            } catch (err) {
-              alert(err.message);
-            }
+              if (del.ok) loadQuestions();
+              else alert("حذف سوال موفق نبود");
+            });
           });
-        });
-
+        }
       } catch (err) {
         mcContainer.innerHTML = `<p style="color:red;">${err.message}</p>`;
         descContainer.innerHTML = "";
       }
     }
 
-    // اعمال فیلتر
     document.getElementById("filter-btn").addEventListener("click", e => {
       e.preventDefault();
       loadQuestions();
     });
 
-    // بارگذاری
-    loadExamTitle();
-    loadQuestions();
-
-    // دکمه‌های مدیریتی
-    const basePath = window.location.pathname.split('/')[2];
-
-    document.getElementById("add-question-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/add-question/`;
-    });
-
-    document.getElementById("edit-exam-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/edit/`;
-    });
-
-    document.getElementById("grade-questions-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/grade/`;
-    });
-
     document.getElementById("exam-results-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/results/`;
+      window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/results/`;
     });
-    document.getElementById("exam-feedback-btn").addEventListener("click", () => {
-      window.location.href = `/dashboard/${basePath}/classes/${classroomId}/exams/${examId}/feedback/`;
-    });
+    if (userType !== "student") {
+      document.getElementById("add-question-btn").addEventListener("click", () => {
+        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/add-question/`;
+      });
+      document.getElementById("edit-exam-btn").addEventListener("click", () => {
+        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/edit/`;
+      });
+      document.getElementById("grade-questions-btn").addEventListener("click", () => {
+        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/grade/`;
+      });
+      document.getElementById("exam-feedback-btn").addEventListener("click", () => {
+        window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/feedback/`;
+      });
+    }
 
-
+    loadExamTitle();
+    checkStudentExam().then(() => loadQuestions());
   </script>
 </body>
 </html>

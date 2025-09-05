@@ -10,7 +10,9 @@ from . import models
 from . import serializers
 from . import permissions
 from . import filters
-from .models import Major, StudentClassroom
+from .models import Major, StudentClassroom, UserExamTime
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class ClassroomListCreateAPIView(generics.ListCreateAPIView):
@@ -698,6 +700,55 @@ class UserExamResultDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
                 raise PermissionDenied("هنوز زمان مشاهده نتیجه این آزمون فرا نرسیده است.")
 
         raise PermissionDenied("شما اجازه دسترسی به این نتیجه را ندارید.")
+
+
+class UserExamTimeListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = serializers.UserExamTimeSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = UserExamTime.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        try:
+            account = models.CustomUser.objects.get(pk=user.id)
+        except models.CustomUser.DoesNotExist:
+            return Response({"detail": "کاربر مشخص‌شده وجود ندارد."}, status=status.HTTP_404_NOT_FOUND)
+
+        student = getattr(account, "student", None)
+        if not student:
+            return Response({"detail": "این کاربر دانش‌آموز نیست."}, status=status.HTTP_400_BAD_REQUEST)
+
+        exam_id = request.data.get("exam_id")
+        if not exam_id:
+            return Response({"detail": "شناسه آزمون الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exam = models.Exam.objects.get(pk=exam_id)
+        except models.Exam.DoesNotExist:
+            return Response({"detail": "آزمون مشخص‌شده وجود ندارد."}, status=status.HTTP_404_NOT_FOUND)
+
+        if exam.end_time < timezone.now():
+            return Response({"detail": "زمان انجام آزمون به پایان رسیده است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        instance = models.UserExamTime.objects.filter(user=student, exam=exam).first()
+        if instance:
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        finish_time = timezone.now() + timezone.timedelta(minutes=exam.duration_minutes)
+        instance = models.UserExamTime.objects.create(
+            user=student,
+            exam=exam,
+            finish_time=finish_time
+        )
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UserExamTimeDetailAPIView(generics.RetrieveAPIView):
+    serializer_class = serializers.UserExamTimeSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = UserExamTime.objects.all()
 
 
 class FeedbackListCreateAPIView(generics.ListCreateAPIView):

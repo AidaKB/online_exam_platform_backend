@@ -19,7 +19,7 @@
       border-radius: 15px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
       padding: 1.2rem 1.5rem;
-      border-top: 5px solid #f1c40f; /* زرد مثل exam-card */
+      border-top: 5px solid #f1c40f;
       transition: all 0.3s ease;
       color: #2c3e50;
     }
@@ -62,29 +62,10 @@
   <script>
     const token = localStorage.getItem("token");
     const pathParts = window.location.pathname.split("/").filter(Boolean);
-    const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
     const BASE_API_URL = `http://localhost:8000/api/exam/answers/?question__exam=${examId}`;
 
     const container = document.getElementById("answers-container");
-
-    // تابع برای گرفتن اطلاعات دانش‌آموز
-    async function fetchStudent(studentId) {
-      const resp = await fetch(`http://localhost:8000/api/core/students/${studentId}/`, {
-        headers: { "Authorization": `Token ${token}` }
-      });
-      if (!resp.ok) return null;
-      return await resp.json();
-    }
-
-    // تابع برای گرفتن اطلاعات سوال (متن + نمره)
-    async function fetchQuestion(questionId) {
-      const resp = await fetch(`http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/questions/${questionId}/`, {
-        headers: { "Authorization": `Token ${token}` }
-      });
-      if (!resp.ok) return null;
-      return await resp.json();
-    }
 
     async function loadAnswers() {
       try {
@@ -102,19 +83,20 @@
         }
 
         for (const ans of data) {
-          const student = await fetchStudent(ans.user);
-          const question = await fetchQuestion(ans.question);
+          const studentName = ans.user?.account?.first_name && ans.user?.account?.last_name
+            ? ans.user.account.first_name + " " + ans.user.account.last_name
+            : "نامشخص";
 
           const div = document.createElement("div");
           div.className = "answer-card";
           div.innerHTML = `
-            <p><strong>دانش‌آموز:</strong> ${student ? student.account.first_name + " " + student.account.last_name : "نامشخص"}</p>
-            <p><strong>سوال:</strong> ${question ? question.text : "نامشخص"}
-               ${question ? `(نمره کل: ${question.score})` : ""}</p>
-            <p><strong>پاسخ:</strong> ${ans.answer_text}</p>
+            <p><strong>دانش‌آموز:</strong> ${studentName}</p>
+            <p><strong>سوال:</strong> ${ans.question?.text || "نامشخص"}
+               ${ans.question ? `(نمره کل: ${ans.question.score})` : ""}</p>
+            <p><strong>پاسخ:</strong> ${ans.answer_text || "-"}</p>
             <label>
               نمره داده‌شده:
-              <input type="number" class="score-input" value="${ans.score}" min="0" step="0.25" data-id="${ans.id}">
+              <input type="number" class="score-input" value="${ans.score ?? ""}" min="0" step="0.25" data-id="${ans.id}">
             </label>
             <button class="btn-primary btn-save-score" data-id="${ans.id}">ثبت نمره</button>
           `;

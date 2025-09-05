@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>داشبورد دانش‌آموز</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="logo-title">
+      <h1 id="student-name">نام دانش‌آموز</h1>
+      <p>خوش آمدید</p>
+    </div>
+    <button id="logout-btn" class="btn-logout">خروج از حساب</button>
+  </header>
+
+  <main class="dashboard-content">
+    <div class="card" onclick="location.href=`/dashboard/student/profile/`">
+      <h3>ویرایش حساب کاربری</h3>
+    </div>
+    <div class="card" onclick="location.href=`/dashboard/student/classes/`">
+      <h3>کلاس‌های من</h3>
+    </div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+    const studentNameEl = document.getElementById("student-name");
+
+    if (token && userId) {
+      fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Token ${token}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("دریافت اطلاعات دانش‌آموز با خطا مواجه شد.");
+        return response.json();
+      })
+      .then(data => {
+        if (data.first_name || data.last_name) {
+          const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+          studentNameEl.textContent = fullName || "دانش‌آموز بدون نام";
+          localStorage.setItem("student_name", fullName);
+        } else {
+          studentNameEl.textContent = "دانش‌آموز بدون نام";
+        }
+      })
+      .catch(error => {
+        console.error("خطا در دریافت اطلاعات دانش‌آموز:", error);
+        studentNameEl.textContent = "خطا در بارگذاری نام دانش‌آموز";
+      });
+    } else {
+      studentNameEl.textContent = "اطلاعات ناقص است";
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = '/login/';
+    });
+  </script>
+</body>
+</html>

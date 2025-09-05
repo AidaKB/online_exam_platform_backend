@@ -10,10 +10,10 @@
 
 <header>
     <h1>ویرایش کلاس</h1>
-<button class="btn-back"
-        onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/`">
-  بازگشت به داشبورد
-</button>
+    <button class="btn-back"
+            onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/`">
+        بازگشت به داشبورد
+    </button>
 </header>
 
 <div class="form-container">
@@ -22,15 +22,20 @@
         <input type="text" id="name" required>
 
         <label>پایه تحصیلی:</label>
-        <input type="text" id="grade" required>
+        <select id="grade" required>
+            <option value="">انتخاب کنید...</option>
+        </select>
 
         <label>توضیحات:</label>
         <textarea id="description"></textarea>
 
-        <label>استاد:</label>
-        <select id="teacher_id" required>
-            <option value="">انتخاب کنید...</option>
-        </select>
+        <!-- این فیلد استاد فقط برای مدیران نمایش داده می‌شود -->
+        <div id="teacher-field">
+            <label>استاد:</label>
+            <select id="teacher_id" required>
+                <option value="">انتخاب کنید...</option>
+            </select>
+        </div>
 
         <button type="submit" class="btn-primary">💾 ذخیره تغییرات</button>
     </form>
@@ -44,17 +49,55 @@
 
 <script>
     const token = localStorage.getItem('token');
+    const userType = window.location.pathname.split('/')[2];
     const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
     const API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/`;
 
     const nameInput = document.getElementById("name");
     const gradeInput = document.getElementById("grade");
     const descriptionInput = document.getElementById("description");
+    const teacherField = document.getElementById("teacher-field");
     const teacherIdInput = document.getElementById("teacher_id");
     const messageEl = document.getElementById("message");
 
-    // گرفتن لیست اساتید و پر کردن dropdown
+    const GRADE_CHOICES = [
+        ['first_grade', 'اول دبستان'],
+        ['second_grade', 'دوم دبستان'],
+        ['third_grade', 'سوم دبستان'],
+        ['fourth_grade', 'چهارم دبستان'],
+        ['fifth_grade', 'پنجم دبستان'],
+        ['sixth_grade', 'ششم دبستان'],
+
+        ['seventh_grade', 'هفتم متوسطه اول'],
+        ['eighth_grade', 'هشتم متوسطه اول'],
+        ['ninth_grade', 'نهم متوسطه اول'],
+
+        ['tenth_grade', 'دهم متوسطه دوم'],
+        ['eleventh_grade', 'یازدهم متوسطه دوم'],
+        ['twelfth_grade', 'دوازدهم متوسطه دوم'],
+
+        ['bachelor', 'کارشناسی'],
+        ['master', 'کارشناسی ارشد'],
+        ['phd', 'دکترا'],
+    ];
+
+    // اگر نقش استاد باشد فیلد استاد را حذف می‌کنیم
+    if (userType === 'teacher') {
+        teacherField.style.display = 'none';
+    }
+
+    function loadGrades(currentGrade) {
+        GRADE_CHOICES.forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            if (currentGrade === value) option.selected = true;
+            gradeInput.appendChild(option);
+        });
+    }
+
     async function loadTeachers() {
+        if (userRole === 'teacher') return; // استاد نباید بتواند استاد دیگر انتخاب کند
         try {
             const res = await fetch("http://localhost:8000/api/core/teachers/", {
                 headers: { "Authorization": `Token ${token}` }
@@ -65,7 +108,7 @@
             teachers.forEach(teacher => {
                 const option = document.createElement("option");
                 option.value = teacher.id;
-                option.textContent = `${teacher.account.first_name} ${teacher.account.last_name} - ${teacher.expertise}`;
+                option.textContent = `${teacher.account.first_name} ${teacher.account.last_name} - ${teacher.expertise || ""}`;
                 teacherIdInput.appendChild(option);
             });
         } catch (err) {
@@ -82,25 +125,31 @@
             const data = await res.json();
 
             nameInput.value = data.name || "";
-            gradeInput.value = data.grade || "";
             descriptionInput.value = data.description || "";
-            teacherIdInput.value = data.teacher?.id || "";
+
+            if (userRole !== 'teacher') {
+                teacherIdInput.value = data.teacher?.id || "";
+            }
+
+            loadGrades(data.grade || "");
         } catch (err) {
             messageEl.textContent = err.message;
             messageEl.style.color = "red";
         }
     }
 
-    // ذخیره تغییرات
     document.getElementById("edit-class-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
             const body = {
                 name: nameInput.value,
                 grade: gradeInput.value,
-                description: descriptionInput.value,
-                teacher_id: teacherIdInput.value ? parseInt(teacherIdInput.value) : null
+                description: descriptionInput.value
             };
+
+            if (userRole !== 'teacher') {
+                body.teacher_id = teacherIdInput.value ? parseInt(teacherIdInput.value) : null;
+            }
 
             const res = await fetch(API_URL, {
                 method: "PUT",
@@ -124,7 +173,6 @@
         }
     });
 
-    // حذف کلاس
     document.getElementById("delete-btn").addEventListener("click", async () => {
         if (!confirm("آیا مطمئن هستید که می‌خواهید این کلاس را حذف کنید؟")) return;
         try {
@@ -142,9 +190,7 @@
         }
     });
 
-    loadTeachers().then(() => {
-        loadClassroom();
-    });
+    loadTeachers().then(() => loadClassroom());
 </script>
 
 </body>

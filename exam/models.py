@@ -116,12 +116,22 @@ class UserOptions(models.Model):
 
 class UserExamResult(models.Model):
     user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش آموز")
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="آزمون")
     score = models.FloatField(default=0, verbose_name="نمره نهایی")
 
     class Meta:
         verbose_name = "نمره نهایی دانش آموز/دانشجو"
         verbose_name_plural = "نمره های نهایی دانش آموز/دانشجو"
+
+
+class UserExamTime(models.Model):
+    user = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="دانش آموز")
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="آزمون")
+    finish_time = models.DateTimeField(null=True, blank=True, verbose_name="زمان پایان آزمون")
+
+    class Meta:
+        verbose_name = "زمان پایان آزمون دانشجو"
+        verbose_name_plural = "زمان های پایان آزمون دانشجو"
 
 
 class Feedback(models.Model):

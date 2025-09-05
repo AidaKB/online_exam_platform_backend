@@ -14,7 +14,7 @@
 </header>
 
 <div class="top-buttons">
-    <button id="add-student-btn" class="btn-primary">➕ افزودن دانش‌آموز</button>
+    <button id="add-student-btn" class="btn-primary" style="display:none;">➕ افزودن دانش‌آموز</button>
 </div>
 
 <!-- فیلترها -->
@@ -44,14 +44,22 @@
 <script>
 const token = localStorage.getItem('token');
 const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
+const userType = window.location.pathname.split('/')[2]; // نقش کاربر
 const BASE_URL = `http://localhost:8000/api/exam/students-classrooms/`;
 
+// نمایش دکمه افزودن فقط برای نقش‌های مجاز
+if (["admin", "teacher", "institute"].includes(userType)) {
+    document.getElementById("add-student-btn").style.display = "inline-block";
+}
+
+// برگشت به صفحه کلاس
 document.getElementById("back-btn").addEventListener("click", () => {
-window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/`;
+    window.location.href = `/dashboard/${userType}/classes/${classroomId}/`;
 });
 
+// رفتن به فرم افزودن دانش‌آموز
 document.getElementById("add-student-btn").addEventListener("click", () => {
-    window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/students/add/`;
+    window.location.href = `/dashboard/${userType}/classes/${classroomId}/students/add/`;
 });
 
 // ساخت URL API با فیلترها
@@ -93,22 +101,28 @@ async function loadStudents() {
 
             div.innerHTML = `
                 <span class="student-name">${item.student}</span>
-                <button class="btn-danger">🗑️ حذف</button>
             `;
 
-            div.querySelector(".btn-danger").addEventListener("click", async () => {
-                if (!confirm(`آیا مطمئن هستید که می‌خواهید ${item.student} را حذف کنید؟`)) return;
-                try {
-                    const delRes = await fetch(`http://localhost:8000/api/exam/students-classrooms/${item.id}/`, {
-                        method: "DELETE",
-                        headers: { "Authorization": `Token ${token}` }
-                    });
-                    if (!delRes.ok) throw new Error("خطا در حذف دانش‌آموز");
-                    loadStudents();
-                } catch (err) {
-                    alert(err.message);
-                }
-            });
+            // فقط نقش‌های مجاز می‌تونن حذف کنن
+            if (["admin", "teacher", "institute"].includes(userType)) {
+                const delBtn = document.createElement("button");
+                delBtn.className = "btn-danger";
+                delBtn.textContent = "🗑️ حذف";
+                delBtn.addEventListener("click", async () => {
+                    if (!confirm(`آیا مطمئن هستید که می‌خواهید ${item.student} را حذف کنید؟`)) return;
+                    try {
+                        const delRes = await fetch(`http://localhost:8000/api/exam/students-classrooms/${item.id}/`, {
+                            method: "DELETE",
+                            headers: { "Authorization": `Token ${token}` }
+                        });
+                        if (!delRes.ok) throw new Error("خطا در حذف دانش‌آموز");
+                        loadStudents();
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                });
+                div.appendChild(delBtn);
+            }
 
             container.appendChild(div);
         });
@@ -118,6 +132,7 @@ async function loadStudents() {
     }
 }
 
+// فیلتر
 document.getElementById("filter-btn").addEventListener("click", e => {
     e.preventDefault();
     loadStudents();

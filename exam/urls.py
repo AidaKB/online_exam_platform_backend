@@ -40,4 +40,6 @@ urlpatterns = [
     path('user-exam-results/', views.UserExamResultListAPIView.as_view(), name='exam-results'),
     path('user-exam-results/<int:pk>/', views.UserExamResultDetailAPIView.as_view(), name='feedback-detail'),
 
+    path('exam-time/', views.UserExamTimeListCreateAPIView.as_view(), name='exam-time'),
+
 ]

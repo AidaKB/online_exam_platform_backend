@@ -278,6 +278,9 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         question = attrs.get('question') or (self.instance.question if self.instance else None)
 
+        if hasattr(user, 'student') and self.instance is None:
+            attrs['user'] = user.student
+
         if self.instance is None:
             if hasattr(user, 'student'):
                 already_exists = models.UserAnswer.objects.filter(
@@ -308,25 +311,23 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         old_score = instance.score
-        new_score = validated_data.get('score', old_score)
+        instance = super().update(instance, validated_data)
+        self._update_exam_score(instance, old_score)
+        return instance
 
-        response = super().update(instance, validated_data)
+    def _update_exam_score(self, instance, old_score):
+        student = instance.user
+        exam = instance.question.exam
+        new_score = instance.score
 
-        if old_score != new_score:
-            if new_score > self.instance.question.score:
-                raise serializers.ValidationError({
-                    "score": f"نمره واردشده نمی‌تواند بیشتر از {self.instance.question.score} باشد."
-                })
+        exam_result, created = models.UserExamResult.objects.get_or_create(
+            user=student, exam=exam,
+            defaults={'score': 0}
+        )
 
-            student = instance.user
-            exam = instance.question.exam
-
-            result, created = models.UserExamResult.objects.get_or_create(user=student, exam=exam)
-
-            result.score = result.score - old_score + new_score
-            result.save()
-
-        return response
+        exam_result.score -= old_score
+        exam_result.score += new_score
+        exam_result.save()
 
 
 class UserOptionsSerializer(serializers.ModelSerializer):
@@ -442,6 +443,28 @@ class UserExamResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserExamResult
         fields = ['id', 'user', 'user_id', 'exam', 'exam_id', 'score']
+
+    def get_user(self, obj):
+        return StudentSerializer(obj.user).data
+
+    def get_exam(self, obj):
+        return ExamSerializer(obj.exam).data
+
+
+class UserExamTimeSerializer(serializers.ModelSerializer):
+    exam_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Exam.objects.all(),
+        source="exam",
+        write_only=True,
+        required=False
+    )
+    user = serializers.SerializerMethodField(read_only=True)
+    exam = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.UserExamTime
+        fields = ['exam_id', 'user', 'exam', 'finish_time']
+        read_only_fields = ['user', 'finish_time']
 
     def get_user(self, obj):
         return StudentSerializer(obj.user).data
