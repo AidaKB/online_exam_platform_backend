@@ -161,6 +161,7 @@ class UserAnswerFilter(django_filters.FilterSet):
     student_first_name = django_filters.CharFilter(field_name='user__account__first_name', lookup_expr='icontains')
     student_last_name = django_filters.CharFilter(field_name='user__account__last_name', lookup_expr='icontains')
     student_national_code = django_filters.CharFilter(field_name='user__national_code', lookup_expr='icontains')
+    student_account_id = django_filters.NumberFilter(field_name='user__account__id')
 
     question_text = django_filters.CharFilter(field_name='question__text', lookup_expr='icontains')
     exam_title = django_filters.CharFilter(field_name='question__exam__title', lookup_expr='icontains')
@@ -180,6 +181,7 @@ class UserAnswerFilter(django_filters.FilterSet):
             'student_first_name',
             'student_last_name',
             'student_national_code',
+            'student_account_id',
             'question_text',
             'exam_title',
             'classroom_name',
@@ -191,6 +193,7 @@ class UserOptionsFilter(django_filters.FilterSet):
     student_first_name = django_filters.CharFilter(field_name='user__account__first_name', lookup_expr='icontains')
     student_last_name = django_filters.CharFilter(field_name='user__account__last_name', lookup_expr='icontains')
     student_national_code = django_filters.CharFilter(field_name='user__national_code', lookup_expr='icontains')
+    student_account_id = django_filters.NumberFilter(field_name='user__account__id')
 
     question_text = django_filters.CharFilter(field_name='question__text', lookup_expr='icontains')
     exam_title = django_filters.CharFilter(field_name='question__exam__title', lookup_expr='icontains')
@@ -202,7 +205,7 @@ class UserOptionsFilter(django_filters.FilterSet):
         model = models.UserOptions
         fields = [
             'user', 'question', 'answer_option',
-            'student_first_name', 'student_last_name', 'student_national_code',
+            'student_first_name', 'student_last_name', 'student_national_code', 'student_account_id',
             'question_text', 'exam_title', 'classroom_name', 'option_text',
         ]
 
