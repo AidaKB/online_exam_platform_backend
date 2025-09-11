@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ویرایش حساب من</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}">
+</head>
+<body>
+  <section class="form-container">
+    <h2>ویرایش اطلاعات من</h2>
+    <form id="admin-profile-form">
+      <div class="form-field">
+        <input type="text" id="first_name" placeholder="نام">
+      </div>
+
+      <div class="form-field">
+        <input type="text" id="last_name" placeholder="نام خانوادگی">
+      </div>
+
+      <div class="form-field">
+        <input type="text" id="username" placeholder="نام کاربری">
+      </div>
+
+      <div class="form-field">
+        <input type="email" id="email" placeholder="ایمیل" required>
+      </div>
+
+      <button type="submit">ذخیره تغییرات</button>
+    </form>
+    <div id="message"></div>
+  </section>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+    const form = document.getElementById("admin-profile-form");
+    const messageDiv = document.getElementById("message");
+
+    async function loadProfile() {
+      try {
+        const resp = await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!resp.ok) {
+          messageDiv.textContent = "خطا در بارگذاری اطلاعات.";
+          messageDiv.classList.add("error");
+          return;
+        }
+        const data = await resp.json();
+
+        // پر کردن فیلدهای User
+        form.first_name.value = data.first_name || "";
+        form.last_name.value = data.last_name || "";
+        form.username.value = data.username || "";
+        form.email.value = data.email || "";
+      } catch (err) {
+        messageDiv.textContent = "ارتباط با سرور برقرار نشد.";
+        messageDiv.classList.add("error");
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      try {
+        await fetch(`http://localhost:8000/api/core/users/${userId}/`, {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            first_name: form.first_name.value,
+            last_name: form.last_name.value,
+            username: form.username.value,
+            email: form.email.value
+          })
+        });
+
+        messageDiv.textContent = "اطلاعات با موفقیت ذخیره شد ✅";
+        messageDiv.classList.remove("error");
+        messageDiv.classList.add("success");
+
+      } catch (err) {
+        messageDiv.textContent = "ذخیره تغییرات با خطا مواجه شد ❌";
+        messageDiv.classList.add("error");
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

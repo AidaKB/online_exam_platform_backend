@@ -26,7 +26,7 @@ class CustomUser(AbstractUser, PermissionsMixin):
 
 class Institute(models.Model):
     account = models.OneToOneField(
-        CustomUser, on_delete=models.PROTECT, related_name="institute", verbose_name="حساب کاربری")
+        CustomUser, on_delete=models.CASCADE, related_name="institute", verbose_name="حساب کاربری")
     name = models.CharField(max_length=255, verbose_name="نام آموزشگاه")
     registration_code = models.CharField(max_length=50, unique=True, verbose_name="کد ثبت آموزشگاه")
     address = models.TextField(verbose_name="آدرس")

@@ -5,6 +5,20 @@
   <meta charset="UTF-8" />
   <title>بازخوردهای آزمون</title>
   <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+  <style>
+    .btn-delete {
+      background-color: #ff4d4f;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-delete:hover {
+      background-color: #d9363e;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -36,17 +50,17 @@
 
   <script>
     const token = localStorage.getItem("token");
+    const isAdmin = localStorage.getItem("is_admin") === "true"; // فلگ ادمین
     const pathParts = window.location.pathname.split("/").filter(Boolean);
     const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
-    const basePath = pathParts[2]; // user_type
     const FEEDBACK_API_URL = `http://localhost:8000/api/exam/feedbackes/`;
     const EXAM_API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/`;
 
     const container = document.querySelector("#feedback-list .questions-container");
     const examTitleHeader = document.getElementById("exam-title");
 
-    // گرفتن عنوان آزمون و نمایش در هدر و تایتل
+    // گرفتن عنوان آزمون
     async function loadExamTitle() {
       try {
         const resp = await fetch(EXAM_API_URL, { headers: { "Authorization": `Token ${token}` } });
@@ -59,7 +73,7 @@
       }
     }
 
-    // ساخت URL با فیلترها و ترتیب + فیلتر بر اساس آزمون فعلی
+    // ساخت URL با فیلترها
     function buildApiUrl() {
       const params = new URLSearchParams();
       const name = document.getElementById("student-name-filter").value.trim();
@@ -72,12 +86,31 @@
       }
       if (code) params.append("student_national_code", code);
 
-      params.append("exam", examId); // فقط بازخوردهای آزمون فعلی
+      params.append("exam", examId);
       if (ordering) params.append("ordering", ordering);
 
       return FEEDBACK_API_URL + "?" + params.toString();
     }
 
+    // حذف بازخورد
+    async function deleteFeedback(feedbackId, cardElement) {
+      if (!confirm("آیا مطمئن هستید که می‌خواهید این بازخورد را حذف کنید؟")) return;
+      try {
+        const resp = await fetch(`${FEEDBACK_API_URL}${feedbackId}/`, {
+          method: "DELETE",
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (resp.status === 204) {
+          cardElement.remove(); // حذف از DOM
+        } else {
+          alert("خطا در حذف بازخورد");
+        }
+      } catch (err) {
+        alert("اشکال در ارتباط با سرور");
+      }
+    }
+
+    // بارگذاری بازخوردها
     async function loadFeedbacks() {
       try {
         const url = buildApiUrl();
@@ -99,6 +132,16 @@
             <h3>${fb.user.account.first_name} ${fb.user.account.last_name} (${fb.user.national_code})</h3>
             <p><strong>بازخورد:</strong> ${fb.text}</p>
           `;
+
+          // فقط اگر ادمین باشه دکمه حذف نمایش بده
+          if (isAdmin) {
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn-delete";
+            delBtn.textContent = "حذف";
+            delBtn.onclick = () => deleteFeedback(fb.id, div);
+            div.appendChild(delBtn);
+          }
+
           container.appendChild(div);
         });
 

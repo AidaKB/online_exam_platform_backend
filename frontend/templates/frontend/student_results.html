@@ -8,12 +8,13 @@
 </head>
 <body>
   <header>
-    <h1>نتایج آزمون</h1>
+    <h1 id="exam-title">نتایج آزمون</h1>
+    <p id="total-score" style="font-weight:bold; color:#2c3e50; margin-top:5px;"></p>
     <button class="btn-back" onclick="window.history.back()">⬅️ بازگشت</button>
   </header>
 
-  <!-- فیلترها -->
-  <section class="filters">
+  <!-- فیلترها (فقط برای غیر دانش‌آموز) -->
+  <section class="filters" id="filters-section">
     <div class="filter-group">
       <input type="text" id="student-name-filter" placeholder="نام دانش‌آموز" class="form-input" />
       <input type="text" id="student-lastname-filter" placeholder="نام خانوادگی دانش‌آموز" class="form-input" />
@@ -39,11 +40,36 @@
   <script>
     const token = localStorage.getItem("token");
     const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const userType = pathParts[1];   // user_type از URL
     const classroomId = pathParts[pathParts.indexOf("classes") + 1];
     const examId = pathParts[pathParts.indexOf("exams") + 1];
 
     const BASE_URL = `http://localhost:8000/api/exam/user-exam-results/`;
+    const EXAM_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/exams/${examId}/`;
+
     const container = document.getElementById("results-container");
+    const totalScoreElement = document.getElementById("total-score");
+
+    // اگر کاربر دانش‌آموز بود، فیلترها رو مخفی کن
+    if (userType === "student") {
+      document.getElementById("filters-section").style.display = "none";
+    }
+
+    // گرفتن نمره کل از آزمون
+    async function loadExamDetails() {
+      try {
+        const resp = await fetch(EXAM_URL, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!resp.ok) throw new Error("خطا در دریافت اطلاعات آزمون");
+
+        const exam = await resp.json();
+        document.getElementById("exam-title").textContent = `نتایج آزمون - ${exam.title}`;
+        totalScoreElement.textContent = `نمره کل آزمون: ${exam.total_score}`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
     function getScoreColor(score, maxScore) {
         const percent = (score / maxScore) * 100;
@@ -57,26 +83,26 @@
         const params = new URLSearchParams();
         params.append("exam", examId);
 
-        const studentFirst = document.getElementById("student-name-filter").value.trim();
-        const studentLast = document.getElementById("student-lastname-filter").value.trim();
-        const username = document.getElementById("username-filter").value.trim();
-        const ordering = document.getElementById("ordering").value;
+        if (userType !== "student") {
+          const studentFirst = document.getElementById("student-name-filter").value.trim();
+          const studentLast = document.getElementById("student-lastname-filter").value.trim();
+          const username = document.getElementById("username-filter").value.trim();
+          const ordering = document.getElementById("ordering").value;
 
-        // چون ویو SearchFilter داره، ما باید سرچ کلی بزنیم
-        let searchTerms = [];
-        if (studentFirst) searchTerms.push(studentFirst);
-        if (studentLast) searchTerms.push(studentLast);
-        if (username) searchTerms.push(username);
+          let searchTerms = [];
+          if (studentFirst) searchTerms.push(studentFirst);
+          if (studentLast) searchTerms.push(studentLast);
+          if (username) searchTerms.push(username);
 
-        if (searchTerms.length > 0) {
-          params.append("search", searchTerms.join(" "));
+          if (searchTerms.length > 0) {
+            params.append("search", searchTerms.join(" "));
+          }
+
+          if (ordering) params.append("ordering", ordering);
         }
-
-        if (ordering) params.append("ordering", ordering);
 
         return BASE_URL + "?" + params.toString();
     }
-
 
     async function loadResults() {
         try {
@@ -104,7 +130,7 @@
                     <span class="result-score ${getScoreColor(result.score, maxScore)}">${result.score}</span>
                 `;
                 div.addEventListener("click", () => {
-                window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/classes/${classroomId}/exams/${examId}/student-results/${result.user.id}/`;
+                  window.location.href = `/dashboard/${userType}/classes/${classroomId}/exams/${examId}/student-results/${result.user.id}/`;
                 });
                 container.appendChild(div);
             }
@@ -114,11 +140,14 @@
         }
     }
 
-    document.getElementById("filter-btn").addEventListener("click", e => {
-      e.preventDefault();
-      loadResults();
-    });
+    if (document.getElementById("filter-btn")) {
+      document.getElementById("filter-btn").addEventListener("click", e => {
+        e.preventDefault();
+        loadResults();
+      });
+    }
 
+    loadExamDetails();
     loadResults();
   </script>
 </body>

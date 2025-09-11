@@ -25,5 +25,10 @@ def student_dashboard(request):
     return render(request, 'frontend/student_dashboard.html')
 
 
+@login_required
+def admin_dashboard(request):
+    return render(request, 'frontend/admin_dashboard.html')
+
+
 def add_class_view(request):
     return render(request, 'frontend/add_classes.html')

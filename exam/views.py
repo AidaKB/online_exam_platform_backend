@@ -655,16 +655,19 @@ class UserExamResultListAPIView(generics.ListAPIView):
                 exam__classroom__teacher=user.teacher
             )
 
-
         elif hasattr(user, 'student'):
             now = timezone.now()
+            qs = models.UserExamResult.objects.filter(user=user.student)
 
-            return models.UserExamResult.objects.filter(
-                user=user.student
-            ).filter(
+            # اگر نتیجه برای بعضی امتحان‌ها هنوز آماده نیست → خطا بده
+            future_results = qs.filter(exam__result_show_time__gt=now)
+            if future_results.exists():
+                raise PermissionDenied("زمان مشاهده آزمون فرا نرسیده است.")
 
+            return qs.filter(
                 Q(exam__result_show_time__lte=now) | Q(exam__result_show_time__isnull=True)
             )
+
         return models.UserExamResult.objects.none()
 
 
@@ -706,6 +709,7 @@ class UserExamTimeListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.UserExamTimeSerializer
     permission_classes = [IsAuthenticated]
     queryset = UserExamTime.objects.all()
+    filterset_fields = ['exam_id']
 
     def create(self, request, *args, **kwargs):
         user = self.request.user

@@ -230,14 +230,14 @@ class FeedbackPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
 
-        if request.method == 'POST':  # create
+        if request.method == 'POST':
             return user.is_superuser or hasattr(user, 'student')
 
-        if request.method in ['GET']:  # list or retrieve
+        if request.method in ['GET']:
             return True
 
         if request.method in ['PUT', 'PATCH', 'DELETE']:
-            return user.is_superuser or hasattr(user, 'student')
+            return user.is_superuser or hasattr(user, 'student') or hasattr(user, 'institute')
 
         return False
 
@@ -258,6 +258,7 @@ class FeedbackPermission(permissions.BasePermission):
             return user.is_superuser or (hasattr(user, 'student') and obj.user == user.student)
 
         if request.method == 'DELETE':
-            return user.is_superuser or (hasattr(user, 'student') and obj.user == user.student)
+            return (user.is_superuser or (hasattr(user, 'student') and obj.user == user.student)
+                    or (hasattr(user, 'institute') and obj.exam.classroom.teacher.institute == user.institute))
 
         return False

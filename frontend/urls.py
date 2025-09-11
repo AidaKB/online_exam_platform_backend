@@ -11,6 +11,7 @@ urlpatterns = [
     path('dashboard/institute/', views.institute_dashboard, name='institute_dashboard'),
     path('dashboard/teacher/', views.teacher_dashboard, name='teacher_dashboard'),
     path('dashboard/student/', views.student_dashboard, name='teacher_dashboard'),
+    path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
 
     path(
         'dashboard/institute/profile/',
@@ -25,6 +26,11 @@ urlpatterns = [
     path(
         'dashboard/student/profile/',
         TemplateView.as_view(template_name='frontend/student_profile.html'),
+        name='profile'
+    ),
+    path(
+        'dashboard/admin/profile/',
+        TemplateView.as_view(template_name='frontend/admin_profile.html'),
         name='profile'
     ),
     path(
@@ -113,6 +119,11 @@ urlpatterns = [
         "dashboard/<str:user_type>/classes/<int:classroom_id>/exams/<int:exam_id>/feedback/",
         TemplateView.as_view(template_name="frontend/feedbacks.html"),
         name='feedbacks'
+    ),
+    path(
+        "dashboard/admin/institutes/",
+        TemplateView.as_view(template_name="frontend/institutes.html"),
+        name='institute'
     ),
 
 ]

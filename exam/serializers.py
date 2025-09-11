@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
+from django.db.models import Sum
 from core.serializers import StudentSerializer
 from . import models
 from core import serializers as core_serializers
@@ -126,10 +126,16 @@ class ExamCategorySerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
     classroom = serializers.PrimaryKeyRelatedField(read_only=True)
     creator = core_serializers.CustomUserSerializer(read_only=True)
+    total_score = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Exam
         fields = '__all__'
+        extra_fields = ['total_score']
+
+    def get_total_score(self, obj):
+        result = models.Question.objects.filter(exam=obj).aggregate(total=Sum('score'))
+        return result['total'] or 0
 
     def validate(self, attrs):
         user = self.context['request'].user

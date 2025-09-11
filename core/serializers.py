@@ -2,6 +2,7 @@ from rest_framework import serializers
 from . import models
 from dj_rest_auth.serializers import LoginSerializer
 from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 
 from .models import CustomUser
 
@@ -127,6 +128,7 @@ class InstituteSignUpSerializer(serializers.ModelSerializer):
 
 class InstituteSerializer(serializers.ModelSerializer):
     account = CustomUserSerializer(read_only=True)
+    token = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Institute
@@ -139,7 +141,15 @@ class InstituteSerializer(serializers.ModelSerializer):
             'phone',
             'website',
             'created_at',
+            'token',
         )
+
+    def get_token(self, obj):
+        try:
+            token = Token.objects.get(user=obj.account)
+            return token.key
+        except Token.DoesNotExist:
+            return None
 
 
 class TeacherSignUpSerializer(serializers.ModelSerializer):

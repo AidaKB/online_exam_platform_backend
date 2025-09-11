@@ -5,6 +5,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
+from .models import CustomUser
 from .permissions import IsAdminOrInstituteSelf, IsAdminOrTeacherSelf, IsAdminOrStudentOrInstituteSelf
 from core import serializers, filters
 from . import models
@@ -58,8 +60,10 @@ class InstituteRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        account = instance.account
         try:
             self.perform_destroy(instance)
+            account.delete()
         except ProtectedError:
             return Response(
                 {"detail": "این موسسه قابل حذف نیست چون کلاس‌هایی وابسته به آن وجود دارند."},

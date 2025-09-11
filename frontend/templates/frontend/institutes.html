@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>موسسه‌های من</title>
+  <link rel="stylesheet" href="{% static 'frontend/css/style.css' %}" />
+  <style>
+.class-card {
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+  border-top: 5px solid #f1c40f; /* تغییر رنگ آبی به زرد */
+  position: relative;
+  transition: all 0.3s ease;
+  color: #2c3e50;
+  text-align: right;
+  cursor: pointer;
+}
+
+    .class-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      background-color: #f9f9f9;
+    }
+    .class-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+    .class-card p {
+      margin: 0.3rem 0;
+      font-size: 1rem;
+      color: #555;
+    }
+    .class-card .btn-remove {
+      font-family: 'IRANSans', Tahoma, sans-serif;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 0.95rem;
+      background-color: #e74c3c;
+      color: white;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .class-card .btn-remove:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>لیست موسسه‌ها</h1>
+    <button class="btn-back" onclick="window.location.href=`/dashboard/${window.location.pathname.split('/')[2]}/`">
+      بازگشت به داشبورد
+    </button>
+  </header>
+
+  <!-- فیلترها -->
+  <section class="filters">
+    <div class="filter-group">
+      <input type="text" id="name-filter" placeholder="نام موسسه" class="form-input" />
+      <input type="text" id="regcode-filter" placeholder="کد ثبت" class="form-input" />
+      <input type="text" id="phone-filter" placeholder="شماره تماس" class="form-input" />
+      <select id="ordering-filter" class="form-input">
+        <option value="">مرتب‌سازی</option>
+        <option value="name">نام (صعودی)</option>
+        <option value="-name">نام (نزولی)</option>
+        <option value="created_at">تاریخ ثبت (صعودی)</option>
+        <option value="-created_at">تاریخ ثبت (نزولی)</option>
+      </select>
+      <button onclick="loadInstitutes()" class="btn-primary">فیلتر</button>
+    </div>
+  </section>
+
+  <!-- لیست موسسه‌ها -->
+  <section id="institute-list" class="class-list"></section>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const API_URL = "http://localhost:8000/api/core/institutes/";
+    const userType = window.location.pathname.split('/')[2]; // admin یا institute
+
+    async function loadInstitutes() {
+      const name = document.getElementById("name-filter").value;
+      const regCode = document.getElementById("regcode-filter").value;
+      const phone = document.getElementById("phone-filter").value;
+      const ordering = document.getElementById("ordering-filter").value;
+
+      let query = [];
+      if (name) query.push(`name=${encodeURIComponent(name)}`);
+      if (regCode) query.push(`registration_code=${encodeURIComponent(regCode)}`);
+      if (phone) query.push(`phone=${encodeURIComponent(phone)}`);
+      if (ordering) query.push(`ordering=${encodeURIComponent(ordering)}`);
+
+      const url = `${API_URL}?${query.join('&')}`;
+
+      try {
+        const response = await fetch(url, {
+          headers: { "Authorization": `Token ${token}` }
+        });
+        if (!response.ok) throw new Error("خطا در دریافت داده‌ها");
+
+        const data = await response.json();
+        const container = document.getElementById("institute-list");
+        container.innerHTML = "";
+
+        data.forEach(ins => {
+          const div = document.createElement("div");
+          div.className = "class-card";
+            div.onclick = (e) => {
+              // اگر روی دکمه حذف کلیک شد، نره داخل صفحه جزئیات
+              if (e.target.classList.contains("btn-remove")) return;
+
+              // مرحله 1: پاک کردن localStorage
+              localStorage.clear();
+
+              // مرحله 2: ذخیره توکن و user_id
+              localStorage.setItem("token", ins.token);
+              localStorage.setItem("user_id", ins.account.id);
+              localStorage.setItem("is_admin", true);
+
+              // مرحله 3: رفتن به داشبورد موسسه
+              window.location.href = "/dashboard/institute/";
+            };
+
+          div.innerHTML = `
+            <h3>${ins.name}</h3>
+            <p><strong>کد ثبت:</strong> ${ins.registration_code}</p>
+            <p><strong>شماره تماس:</strong> ${ins.phone}</p>
+            <p><strong>ایمیل:</strong> ${ins.account?.email || "-"}</p>
+            <p><strong>وب‌سایت:</strong> ${ins.website || "-"}</p>
+            <button class="btn-remove">حذف</button>
+          `;
+          div.querySelector(".btn-remove").addEventListener("click", async () => {
+            if (!confirm("آیا مطمئن هستید می‌خواهید این موسسه را حذف کنید؟")) return;
+            const resp = await fetch(`${API_URL}${ins.id}/`, {
+              method: "DELETE",
+              headers: { "Authorization": `Token ${token}` }
+            });
+            if (resp.ok) div.remove();
+            else {
+              const err = await resp.json().catch(()=>({detail:"خطا در حذف موسسه"}));
+              alert(err.detail || "خطا در حذف موسسه");
+            }
+          });
+          container.appendChild(div);
+        });
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    window.onload = loadInstitutes;
+  </script>
+</body>
+</html>
