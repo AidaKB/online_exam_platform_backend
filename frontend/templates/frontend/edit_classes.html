@@ -49,8 +49,9 @@
 
 <script>
     const token = localStorage.getItem('token');
-    const userType = window.location.pathname.split('/')[2];
-    const classroomId = window.location.pathname.split('/').filter(Boolean).slice(-2, -1)[0];
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const userType = pathParts[1]; // user_type از URL
+    const classroomId = pathParts[pathParts.indexOf("classes") + 1]; // گرفتن id کلاس از URL
     const API_URL = `http://localhost:8000/api/exam/classrooms/${classroomId}/`;
 
     const nameInput = document.getElementById("name");
@@ -67,15 +68,12 @@
         ['fourth_grade', 'چهارم دبستان'],
         ['fifth_grade', 'پنجم دبستان'],
         ['sixth_grade', 'ششم دبستان'],
-
         ['seventh_grade', 'هفتم متوسطه اول'],
         ['eighth_grade', 'هشتم متوسطه اول'],
         ['ninth_grade', 'نهم متوسطه اول'],
-
         ['tenth_grade', 'دهم متوسطه دوم'],
         ['eleventh_grade', 'یازدهم متوسطه دوم'],
         ['twelfth_grade', 'دوازدهم متوسطه دوم'],
-
         ['bachelor', 'کارشناسی'],
         ['master', 'کارشناسی ارشد'],
         ['phd', 'دکترا'],
@@ -86,7 +84,9 @@
         teacherField.style.display = 'none';
     }
 
+    // بارگذاری پایه‌ها
     function loadGrades(currentGrade) {
+        gradeInput.innerHTML = '<option value="">انتخاب کنید...</option>';
         GRADE_CHOICES.forEach(([value, label]) => {
             const option = document.createElement("option");
             option.value = value;
@@ -96,8 +96,9 @@
         });
     }
 
+    // بارگذاری لیست استادها
     async function loadTeachers() {
-        if (userRole === 'teacher') return; // استاد نباید بتواند استاد دیگر انتخاب کند
+        if (userType === 'teacher') return; // استاد نباید استاد انتخاب کند
         try {
             const res = await fetch("http://localhost:8000/api/core/teachers/", {
                 headers: { "Authorization": `Token ${token}` }
@@ -105,6 +106,7 @@
             if (!res.ok) throw new Error("خطا در دریافت لیست استادها");
 
             const teachers = await res.json();
+            teacherIdInput.innerHTML = '<option value="">انتخاب کنید...</option>';
             teachers.forEach(teacher => {
                 const option = document.createElement("option");
                 option.value = teacher.id;
@@ -116,28 +118,29 @@
         }
     }
 
+    // بارگذاری اطلاعات کلاس
     async function loadClassroom() {
         try {
             const res = await fetch(API_URL, {
                 headers: { "Authorization": `Token ${token}` }
             });
             if (!res.ok) throw new Error("خطا در دریافت اطلاعات کلاس");
-            const data = await res.json();
 
+            const data = await res.json();
             nameInput.value = data.name || "";
             descriptionInput.value = data.description || "";
-
-            if (userRole !== 'teacher') {
-                teacherIdInput.value = data.teacher?.id || "";
-            }
-
             loadGrades(data.grade || "");
+
+            if (userType !== 'teacher' && data.teacher) {
+                teacherIdInput.value = data.teacher.id;
+            }
         } catch (err) {
             messageEl.textContent = err.message;
             messageEl.style.color = "red";
         }
     }
 
+    // ثبت تغییرات
     document.getElementById("edit-class-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
@@ -146,8 +149,7 @@
                 grade: gradeInput.value,
                 description: descriptionInput.value
             };
-
-            if (userRole !== 'teacher') {
+            if (userType !== 'teacher') {
                 body.teacher_id = teacherIdInput.value ? parseInt(teacherIdInput.value) : null;
             }
 
@@ -173,6 +175,7 @@
         }
     });
 
+    // حذف کلاس
     document.getElementById("delete-btn").addEventListener("click", async () => {
         if (!confirm("آیا مطمئن هستید که می‌خواهید این کلاس را حذف کنید؟")) return;
         try {
@@ -183,15 +186,17 @@
             if (!res.ok) throw new Error("خطا در حذف کلاس");
 
             alert("کلاس با موفقیت حذف شد.");
-            window.location.href = `/dashboard/${window.location.pathname.split('/')[2]}/`;
+            window.location.href = `/dashboard/${userType}/`;
         } catch (err) {
             messageEl.textContent = err.message;
             messageEl.style.color = "red";
         }
     });
 
+    // بارگذاری همه چیز
     loadTeachers().then(() => loadClassroom());
 </script>
+
 
 </body>
 </html>
